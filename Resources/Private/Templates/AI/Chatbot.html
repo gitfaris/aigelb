@@ -1,0 +1,191 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+
+<div class="aigelb-chatbot-container">
+
+    <!-- Error Messages -->
+    <f:if condition="{hasError}">
+        <div class="alert alert-danger" role="alert">
+            <strong>Error:</strong> {errorMessage}
+        </div>
+    </f:if>
+
+    <!-- Conversation History -->
+    <f:if condition="{conversationMessages}">
+        <h3 class="aigelb-history-title">Conversation:</h3>
+        <div class="container">
+            <f:for each="{conversationMessages}" as="message">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="aigelb-message-header">
+                            <f:if condition="{message.role} == 'user'">
+                                <strong>You:</strong>
+                            </f:if>
+                            <f:if condition="{message.role} == 'assistant'">
+                                <strong>AI Assistant:</strong>
+                            </f:if>
+                            <span class="aigelb-message-time">
+                                <f:format.date format="d.m.Y H:i">{message.date_created}</f:format.date>
+                            </span>
+                        </div>
+                        <div class="aigelb-message-content">
+                            <f:format.nl2br>{message.content}</f:format.nl2br>
+                        </div>
+                    </div>
+                </div>
+            </f:for>
+        </div>
+    </f:if>
+
+    <!-- Current AI Response -->
+    <f:if condition="{hasResponse}">
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="aigelb-current-response">
+                        <div class="aigelb-message-header">
+                            <strong>You:</strong>
+                        </div>
+                        <div class="aigelb-message-content aigelb-user-message">
+                            <f:format.nl2br>{userInput}</f:format.nl2br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="aigelb-current-response">
+                        <div class="aigelb-message-header">
+                            <strong>AI Assistant:</strong>
+                        </div>
+                        <div class="aigelb-message-content aigelb-ai-message">
+                            <f:format.nl2br>{aiResponse}</f:format.nl2br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </f:if>
+
+    <!-- Main Chat Form -->
+    <div class="container">
+        <f:form action="chatbot" controller="AI" method="post" class="aigelb-form">
+            <!-- Hidden conversation ID for session tracking -->
+            <f:if condition="{conversationId}">
+                <f:form.hidden name="conversationId" value="{conversationId}" />
+            </f:if>
+
+            <div class="row mb-3">
+                <div class="col-10">
+                    <f:form.textfield
+                        name="userinput"
+                        value=""
+                        placeholder="Ask me anything..."
+                        class="form-control"
+                        required="required"
+                        maxlength="1000"
+                    />
+                </div>
+                <div class="col-2">
+                    <f:form.submit
+                        value="Send"
+                        class="btn btn-primary w-100"
+                    />
+                </div>
+            </div>
+        </f:form>
+    </div>
+
+    <!-- New Conversation Button -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12 text-center">
+                <f:link.action
+                    action="chatbot"
+                    controller="AI"
+                    class="btn btn-outline-secondary"
+                >
+                    <i class="fas fa-plus"></i> Start New Conversation
+                </f:link.action>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Optional: Add some custom CSS for better styling -->
+<style>
+    .aigelb-chatbot-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .aigelb-history-title {
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .aigelb-message-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .aigelb-message-time {
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-left: 10px;
+    }
+
+    .aigelb-message-content {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+        line-height: 1.5;
+    }
+
+    .aigelb-current-response {
+        margin-bottom: 15px;
+    }
+
+    .aigelb-user-message {
+        background-color: #e3f2fd;
+        border-left-color: #2196f3;
+    }
+
+    .aigelb-ai-message {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+    }
+
+    .aigelb-form {
+        margin-top: 30px;
+    }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .col-10, .col-2 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .row.mb-3 .col-2 {
+            margin-top: 10px;
+        }
+    }
+    </style>
+</html>

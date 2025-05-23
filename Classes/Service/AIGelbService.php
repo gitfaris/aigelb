@@ -137,12 +137,28 @@ final readonly class AIGelbService {
         }
     }
 
-    public function streamAgent(string $agentId, string $message, string $language): string {
+
+    /**
+     * Sends a message to the AI agent and streams the response
+     *
+     * @param string $agentId The unique identifier of the agent
+     * @param string $message The user message to send
+     * @param string $language The language locale (e.g., 'en-US', 'de-DE')
+     * @param string $conversationId The conversation ID to maintain context
+     * @return string The streamed AI response
+     */
+    public function streamAgent(string $agentId, string $message, string $language, string $conversationId): string
+    {
         try {
-            $apiUrl = getenv(self::RAG_URL_ENV) . '/api/stream/' . $agentId;
+            // Use the correct API URL from documentation
+            $apiUrl = getenv(self::API_URL_ENV) . '/api/stream/' . $agentId;
+
+            // Build request data according to API specification
             $data = [
                 'message' => $message,
                 'language' => $language,
+                'headlessAgentId' => getenv(self::AGENT_ID_ENV) ?: $agentId,
+                'conversation_id' => $conversationId,
             ];
 
             $response = $this->sendApiRequest($apiUrl, 'POST', $data);
@@ -150,6 +166,7 @@ final readonly class AIGelbService {
             $stream = $response->getBody();
             $result = '';
 
+            // Stream the response content
             while (!$stream->eof()) {
                 $chunk = $stream->read(4096);
                 if ($chunk !== '') {
@@ -157,14 +174,62 @@ final readonly class AIGelbService {
                 }
             }
 
+            $this->logger->info('AI agent response received successfully', [
+                'agentId' => $agentId,
+                'conversationId' => $conversationId,
+                'messageLength' => strlen($message),
+                'responseLength' => strlen($result),
+            ]);
+
             return $result;
         } catch (\Exception $e) {
-            $this->logger->error('Failed to stream agent', [
+            $this->logger->error('Failed to stream agent response', [
                 'agentId' => $agentId,
+                'conversationId' => $conversationId,
                 'message' => $message,
+                'language' => $language,
                 'error' => $e->getMessage(),
             ]);
             return '';
+        }
+    }
+
+    /**
+     * Retrieves all messages from a specific conversation
+     *
+     * @param string $conversationId The unique identifier of the conversation
+     * @return array<int, array<string, mixed>> Array of message objects or empty array on failure
+     */
+    public function getConversationMessages(string $conversationId): array
+    {
+        try {
+            $apiUrl = getenv(self::API_URL_ENV) . '/api/conversation/' . $conversationId . '/messages';
+
+            $response = $this->sendApiRequest($apiUrl, 'GET');
+
+            $contents = $response->getBody()->getContents();
+            $messages = json_decode($contents, true);
+
+            if (!is_array($messages)) {
+                $this->logger->warning('Invalid response format for conversation messages', [
+                    'conversationId' => $conversationId,
+                    'response' => $contents,
+                ]);
+                return [];
+            }
+
+            $this->logger->info('Conversation messages retrieved successfully', [
+                'conversationId' => $conversationId,
+                'messageCount' => count($messages),
+            ]);
+
+            return $messages;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve conversation messages', [
+                'conversationId' => $conversationId,
+                'error' => $e->getMessage(),
+            ]);
+            return [];
         }
     }
 
