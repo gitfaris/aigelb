@@ -106,6 +106,37 @@ final readonly class AIGelbService {
         }
     }
 
+    /**
+     * Creates a new conversation id
+     *
+     * @return string The conversation ID or empty string on failure
+     */
+    public function createConversation(): string {
+        try {
+            $apiUrl = getenv(self::API_URL_ENV) . '/api/conversation';
+
+            $data = [
+                'headlessAgentId' => getenv(self::AGENT_ID_ENV)
+            ];
+
+            $response = $this->sendApiRequest($apiUrl, 'POST', $data);
+            $contents = json_decode($response->getBody()->getContents());
+
+            $this->logger->info('Conversation created successfully', [
+                'agentId' => getenv(self::AGENT_ID_ENV),
+                'conversationId' => $contents->conversation_id
+            ]);
+
+            return $contents->conversation_id;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to create conversation', [
+                'agentId' => getenv(self::AGENT_ID_ENV),
+                'error' => $e->getMessage(),
+            ]);
+            return '';
+        }
+    }
+
     public function streamAgent(string $agentId, string $message, string $language): string {
         try {
             $apiUrl = getenv(self::RAG_URL_ENV) . '/api/stream/' . $agentId;
@@ -141,13 +172,13 @@ final readonly class AIGelbService {
         $result = $this->connectionPool
             ->getConnectionForTable('tt_content')
             ->select(
-                ['agentId'],
+                ['tx_aigelb_agentid'],
                 'tx_aigelb_domain_model_agent',
                 [],
             )
             ->fetchAssociative();
 
-        return $result === false ? '' : $result['agentId'];
+        return $result === false ? '' : $result['tx_aigelb_agentid'];
     }
 
     public function saveAgentId(string $agentId): void {
@@ -156,7 +187,7 @@ final readonly class AIGelbService {
             ->insert(
                 'tx_aigelb_domain_model_agent',
                 [
-                    'agentId' => $agentId,
+                    'tx_aigelb_agentid' => $agentId,
                     'crdate' => time(),
                 ],
             );

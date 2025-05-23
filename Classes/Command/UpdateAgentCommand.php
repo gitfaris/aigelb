@@ -106,13 +106,13 @@ class UpdateAgentCommand extends Command {
         $return = $this->connectionPool
             ->getConnectionForTable('tt_content')
             ->select(
-                ['agentId'],
+                ['tx_aigelb_agentid'],
                 'tx_aigelb_domain_model_agent',
                 [],
             )
             ->fetchAssociative();
 
-        return $return['agentId']; // @phpstan-ignore-line
+        return $return['tx_aigelb_agentid']; // @phpstan-ignore-line
     }
 
     protected function saveUpdatedTimeAndKnowledgeForPage(int $pageUid, string $knowledgeId): void {

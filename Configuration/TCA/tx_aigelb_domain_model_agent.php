@@ -3,7 +3,7 @@
 return [
     'ctrl' => [
         'title' => 'LLL:EXT:aigelb/Resources/Private/Language/locallang_db.xlf:tx_aigelb_domain_model_agent',
-        'label' => 'Agent',
+        'label' => 'tx_aigelb_agentid',
         'tstamp' => 'tstamp',
         'crdate' => 'crdate',
         'sortby' => 'sorting',
@@ -17,11 +17,11 @@ return [
             'starttime' => 'starttime',
             'endtime' => 'endtime',
         ],
-        'searchFields' => 'agentId',
+        'searchFields' => 'tx_aigelb_agentid',
         'iconfile' => 'EXT:aigelb/Resources/Public/Icons/tx_aigelb_domain_model_agent.gif',
     ],
     'types' => [
-        '1' => ['showitem' => 'sys_language_uid, l10n_parent, l10n_diffsource, hidden, agentId, --div--;LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:tabs.access, starttime, endtime'],
+        '1' => ['showitem' => 'sys_language_uid, l10n_parent, l10n_diffsource, hidden, tx_aigelb_agentid, --div--;LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:tabs.access, starttime, endtime'],
     ],
     'columns' => [
         'sys_language_uid' => [
@@ -88,7 +88,7 @@ return [
             ],
         ],
 
-        'agentId' => [
+        'tx_aigelb_agentid' => [
             'exclude' => true,
             'label' => 'LLL:EXT:aigelb/Resources/Private/Language/locallang_db.xlf:tx_aigelb_domain_model_agent.agentid',
             'config' => [

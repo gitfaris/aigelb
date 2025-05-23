@@ -3,7 +3,7 @@ CREATE TABLE tx_aigelb_domain_model_agent (
 );
 
 CREATE TABLE tx_aigelb_domain_model_questions (
-	questions VARCHAR(255) DEFAULT '' NOT NULL
+	question VARCHAR(255) DEFAULT '' NOT NULL
 );
 
 CREATE TABLE pages (

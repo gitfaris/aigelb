@@ -8,6 +8,7 @@ use IGelb\Aigelb\Service\AIGelbService;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 final class AIController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController {
     public function __construct(
@@ -16,6 +17,9 @@ final class AIController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControl
     ) {}
 
     public function indexAction(): ResponseInterface {
+
+        $conversationId = $this->aIGelbService->createConversation();
+
         $questions = $this->getQuestions();
         $this->view->assign('questions', $questions);
         return $this->htmlResponse();
@@ -50,13 +54,13 @@ final class AIController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControl
         $return = $this->connectionPool
             ->getConnectionForTable('tt_content')
             ->select(
-                ['agentId'],
+                ['tx_aigelb_agentid'],
                 'tx_aigelb_domain_model_agent',
                 [],
             )
             ->fetchAssociative();
 
-        return $return['agentId'] ?? '';
+        return $return['tx_aigelb_agentid'] ?? '';
     }
 
     /**

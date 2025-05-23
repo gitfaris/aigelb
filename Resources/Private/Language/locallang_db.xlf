@@ -30,6 +30,12 @@
 			<trans-unit id="tx_aigelb_lastupdated">
 				<source>Last updated (Internal)</source>
 			</trans-unit>
+			<trans-unit id="tx_aigelb_domain_model_agent">
+				<source>Agent</source>
+			</trans-unit>
+			<trans-unit id="tx_aigelb_domain_model_questions">
+				<source>Questions</source>
+			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent.agentid">
 				<source>ID (Internal)</source>
 			</trans-unit>

@@ -17,7 +17,7 @@ return [
             'starttime' => 'starttime',
             'endtime' => 'endtime',
         ],
-        'searchFields' => 'agentId',
+        'searchFields' => 'question',
         'iconfile' => 'EXT:aigelb/Resources/Public/Icons/tx_aigelb_domain_model_questions.gif',
     ],
     'types' => [
