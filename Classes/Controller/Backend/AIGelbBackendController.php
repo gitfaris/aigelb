@@ -33,26 +33,21 @@ final class AIGelbBackendController extends ActionController
     public function indexAction(): ResponseInterface
     {
         $moduleTemplate = $this->moduleTemplateFactory->create($this->request);
-
-        // Set module title and description
         $moduleTemplate->setTitle($this->getLanguageService()->sL('LLL:EXT:aigelb/Resources/Private/Language/locallang_be.xlf:module.title'));
 
         // Get all AI-indexed pages and statistics
         $indexedPages = $this->pageIndexService->getIndexedPages();
         $statistics = $this->pageIndexService->getIndexedPagesStatistics();
 
-        // Assign data to view
-        $this->view->assignMultiple([
+        // Assign data directly to module template
+        $moduleTemplate->assignMultiple([
             'indexedPages' => $indexedPages,
             'pageCount' => $statistics['total'],
             'statistics' => $statistics,
         ]);
 
-        $moduleTemplate->setContent($this->view->render());
-
-        return $this->htmlResponse($moduleTemplate->renderContent());
+        return $moduleTemplate->renderResponse('Backend/AIGelbBackend/Index');
     }
-
     /**
      * Get TYPO3 language service
      *
