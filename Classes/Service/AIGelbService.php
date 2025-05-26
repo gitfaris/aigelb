@@ -9,19 +9,35 @@ use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Http\RequestFactory;
 
+/**
+ * AI-Gelb Service Class
+ *
+ * Core service for AI-Gelb TYPO3 Extension providing communication with AI-Gelb API.
+ * Handles agent management, conversations, and AI interactions.
+ */
 #[Channel('aigelb-service')]
 final readonly class AIGelbService {
+
+    // Environment variable names for configuration
     private const API_TOKEN_ENV = 'AIGELB_API_TOKEN';
     private const API_URL_ENV = 'AIGELB_API_URL';
     private const RAG_URL_ENV = 'AIGELB_RAG_URL';
     private const AGENT_ID_ENV = 'AIGELB_AGENTID';
 
+    /**
+     * Constructor with dependency injection
+     */
     public function __construct(
         protected readonly LoggerInterface $logger,
         private readonly ConnectionPool $connectionPool,
         protected readonly RequestFactory $requestFactory,
     ) {}
 
+    /**
+     * Get API token from environment variables
+     *
+     * @throws \RuntimeException If token not found
+     */
     private function getApiToken(): string {
         $token = getenv(self::API_TOKEN_ENV);
         if (!$token) {
@@ -31,7 +47,9 @@ final readonly class AIGelbService {
     }
 
     /**
-     * @return array<string, string>
+     * Create standard HTTP headers for API requests
+     *
+     * @return array<string, string> HTTP headers with authorization and content type
      */
     private function getDefaultHeaders(): array {
         return [
@@ -40,7 +58,15 @@ final readonly class AIGelbService {
         ];
     }
 
-    private function sendApiRequest(string $url, string $method, array $data = null): ResponseInterface { // @phpstan-ignore-line
+    /**
+     * Send HTTP request to AI-Gelb API
+     *
+     * @param string $url API endpoint URL
+     * @param string $method HTTP method
+     * @param array|null $data Request body data (JSON encoded)
+     * @return ResponseInterface PSR-7 response
+     */
+    private function sendApiRequest(string $url, string $method, array $data = null): ResponseInterface {
         $options = [
             'headers' => $this->getDefaultHeaders(),
             'body' => json_encode($data),
@@ -50,18 +76,19 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Get the current agent ID from database or environment
+     * Get current agent ID with priority: Environment > Database
      *
-     * @return string Agent ID
+     * @return string Agent ID or empty string if not found
      */
     public function getAgentId(): string
     {
-        // Priority: Environment variable first, then database
+        // Priority 1: Check environment variable
         $envAgentId = getenv(self::AGENT_ID_ENV);
         if ($envAgentId !== false && !empty($envAgentId)) {
             return $envAgentId;
         }
 
+        // Priority 2: Database fallback
         $result = $this->connectionPool
             ->getConnectionForTable('tx_aigelb_domain_model_agent')
             ->select(
@@ -75,9 +102,9 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Creates a new conversation id
+     * Create new conversation with AI-Gelb API
      *
-     * @return string The conversation ID or empty string on failure
+     * @return string Conversation ID or empty string on failure
      */
     public function createConversation(): string {
         try {
@@ -106,11 +133,11 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Stream agent response with automatic agent ID resolution
+     * Send user input to AI agent (public interface)
      *
-     * @param string $userInput User question/input
+     * @param string $userInput User question/message
      * @param string $language Language locale (e.g., 'de-DE')
-     * @param string $conversationId Conversation identifier
+     * @param string $conversationId Conversation context ID
      * @return string AI response
      */
     public function streamAgent(
@@ -124,21 +151,21 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Sends a message to the AI agent and streams the response
+     * Internal implementation for streaming AI responses
      *
-     * @param string $agentId The unique identifier of the agent
-     * @param string $userInput The user message to send
-     * @param string $language The language locale (e.g., 'en-US', 'de-DE')
-     * @param string $conversationId The conversation ID to maintain context
-     * @return string The streamed AI response
+     * Sends request to streaming endpoint and processes chunked response.
+     *
+     * @param string $agentId Unique agent identifier
+     * @param string $userInput User message
+     * @param string $language Response language
+     * @param string $conversationId Conversation context
+     * @return string Complete AI response
      */
     private function streamAgentWithId(string $agentId, string $userInput, string $language, string $conversationId): string
     {
         try {
-            // Use the correct API URL from documentation
             $apiUrl = getenv(self::API_URL_ENV) . '/api/stream/' . $agentId;
 
-            // Build request data according to API specification
             $data = [
                 'message' => $userInput,
                 'language' => $language,
@@ -148,10 +175,10 @@ final readonly class AIGelbService {
 
             $response = $this->sendApiRequest($apiUrl, 'POST', $data);
 
+            // Process streaming response in chunks
             $stream = $response->getBody();
             $result = '';
 
-            // Stream the response content
             while (!$stream->eof()) {
                 $chunk = $stream->read(4096);
                 if ($chunk !== '') {
@@ -180,10 +207,10 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Retrieves all messages from a specific conversation
+     * Retrieve all messages from a conversation
      *
-     * @param string $conversationId The unique identifier of the conversation
-     * @return array<int, array<string, mixed>> Array of message objects or empty array on failure
+     * @param string $conversationId Unique conversation identifier
+     * @return array<int, array<string, mixed>> Array of message objects
      */
     public function getConversationMessages(string $conversationId): array
     {
@@ -219,9 +246,11 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Get predefined questions from database
+     * Load predefined questions from TYPO3 database
      *
-     * @return array<int, array<string, mixed>>
+     * Enables backend-managed quick selection buttons in frontend.
+     *
+     * @return array<int, array<string, mixed>> Array of question objects
      */
     public function getPredefinedQuestions(): array
     {
@@ -236,6 +265,4 @@ final readonly class AIGelbService {
 
         return $result ?: [];
     }
-
-
 }
