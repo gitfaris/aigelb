@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" datatype="plaintext" original="EXT:aigelb/Resources/Private/Language/locallang_be.xlf" date="2025-01-26T12:00:00Z" product-name="aigelb">
+		<header/>
+		<body>
+			<!-- Module -->
+			<trans-unit id="module.title">
+				<source>AI-Gelb: Indexed Pages Overview</source>
+			</trans-unit>
+			<trans-unit id="module.description">
+				<source>This module shows all pages that are marked for AI indexing and their synchronization status with the AI-Gelb knowledge base.</source>
+			</trans-unit>
+
+			<!-- Overview -->
+			<trans-unit id="overview.total_pages">
+				<source>Total indexed pages</source>
+			</trans-unit>
+
+			<!-- Table -->
+			<trans-unit id="table.title">
+				<source>AI-Indexed Pages</source>
+			</trans-unit>
+			<trans-unit id="table.header.uid">
+				<source>UID</source>
+			</trans-unit>
+			<trans-unit id="table.header.title">
+				<source>Page Title</source>
+			</trans-unit>
+			<trans-unit id="table.header.slug">
+				<source>Slug</source>
+			</trans-unit>
+			<trans-unit id="table.header.language">
+				<source>Language</source>
+			</trans-unit>
+			<trans-unit id="table.header.knowledgebase">
+				<source>Knowledge Base</source>
+			</trans-unit>
+			<trans-unit id="table.header.last_updated">
+				<source>Last Updated</source>
+			</trans-unit>
+			<trans-unit id="table.header.status">
+				<source>Status</source>
+			</trans-unit>
+			<trans-unit id="table.not_set">
+				<source>Not set</source>
+			</trans-unit>
+			<trans-unit id="table.never_indexed">
+				<source>Never indexed</source>
+			</trans-unit>
+			<trans-unit id="table.needs_update">
+				<source>Update needed</source>
+			</trans-unit>
+
+			<!-- Status Labels -->
+			<trans-unit id="status.up_to_date">
+				<source>Up to date</source>
+			</trans-unit>
+			<trans-unit id="status.needs_update">
+				<source>Needs update</source>
+			</trans-unit>
+			<trans-unit id="status.not_indexed">
+				<source>Not indexed</source>
+			</trans-unit>
+			<trans-unit id="status.hidden">
+				<source>Hidden</source>
+			</trans-unit>
+			<trans-unit id="status.deleted">
+				<source>Deleted</source>
+			</trans-unit>
+			<trans-unit id="status.hidden_deleted">
+				<source>Hidden/Deleted</source>
+			</trans-unit>
+
+			<!-- Badges -->
+			<trans-unit id="badge.hidden">
+				<source>Hidden</source>
+			</trans-unit>
+			<trans-unit id="badge.deleted">
+				<source>Deleted</source>
+			</trans-unit>
+
+			<!-- No Pages -->
+			<trans-unit id="no_pages.title">
+				<source>No indexed pages found</source>
+			</trans-unit>
+			<trans-unit id="no_pages.description">
+				<source>There are currently no pages marked for AI indexing. To add pages to the knowledge base, edit the page properties and enable the "Index page" option in the AI-Gelb tab.</source>
+			</trans-unit>
+
+			<!-- Info Section -->
+			<trans-unit id="info.title">
+				<source>Information &amp; Help</source>
+			</trans-unit>
+			<trans-unit id="info.status_legend">
+				<source>Status Legend</source>
+			</trans-unit>
+			<trans-unit id="info.commands_title">
+				<source>Synchronization</source>
+			</trans-unit>
+			<trans-unit id="info.commands_description">
+				<source>To synchronize the knowledge base with AI-Gelb, run the following command:</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

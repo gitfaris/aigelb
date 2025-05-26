@@ -6,3 +6,14 @@ services:
 
   IGelb\Aigelb\:
     resource: '../Classes/*'
+
+  # Backend Controller für das Modul
+  IGelb\Aigelb\Controller\Backend\AIGelbBackendController:
+    arguments:
+      $moduleTemplateFactory: '@TYPO3\CMS\Backend\Template\ModuleTemplateFactory'
+      $pageIndexService: '@IGelb\Aigelb\Service\PageIndexService'
+
+  # Page Index Service
+  IGelb\Aigelb\Service\PageIndexService:
+    arguments:
+      $connectionPool: '@TYPO3\CMS\Core\Database\ConnectionPool'
