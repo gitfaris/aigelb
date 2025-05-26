@@ -49,61 +49,29 @@ final readonly class AIGelbService {
         return $this->requestFactory->request($url, $method, $options);
     }
 
-    public function getAgentId(string $baseUrl): string {
-        if ($agentId = getenv(self::AGENT_ID_ENV)) {
-            return $agentId;
+    /**
+     * Get the current agent ID from database or environment
+     *
+     * @return string Agent ID
+     */
+    public function getAgentId(): string
+    {
+        // Priority: Environment variable first, then database
+        $envAgentId = getenv(self::AGENT_ID_ENV);
+        if ($envAgentId !== false && !empty($envAgentId)) {
+            return $envAgentId;
         }
 
-        try {
-            $apiUrl = getenv(self::API_URL_ENV) . '/api/agent';
-            $response = $this->sendApiRequest($apiUrl, 'POST', ['url' => $baseUrl]);
+        $result = $this->connectionPool
+            ->getConnectionForTable('tx_aigelb_domain_model_agent')
+            ->select(
+                ['tx_aigelb_agentid'],
+                'tx_aigelb_domain_model_agent',
+                []
+            )
+            ->fetchAssociative();
 
-            $contents = json_decode($response->getBody()->getContents());
-            $this->logger->info('Agent ID fetched successfully', ['id' => $contents->id]);
-
-            return $contents->id;
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to fetch Agent ID', [
-                'error' => $e->getMessage(),
-                'baseUrl' => $baseUrl,
-            ]);
-            return '';
-        }
-    }
-
-    public function addKnowledge(string $agentId, string $url, string $promptRequirements): string {
-        try {
-            $apiUrl = getenv(self::API_URL_ENV) . '/api/agent/' . $agentId . '/knowledge';
-            $data = [
-                'type' => 'page',
-                'context' => $promptRequirements,
-                'source' => $url,
-            ];
-
-            $response = $this->sendApiRequest($apiUrl, 'POST', $data);
-            return $response->getBody()->getContents();
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to add knowledge', [
-                'agentId' => $agentId,
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
-            return '';
-        }
-    }
-
-    public function deleteKnowledge(string $knowledgeId): string {
-        try {
-            $apiUrl = getenv(self::API_URL_ENV) . '/api/knowledge/' . $knowledgeId;
-            $response = $this->sendApiRequest($apiUrl, 'DELETE');
-            return $response->getBody()->getContents();
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to delete knowledge', [
-                'knowledgeId' => $knowledgeId,
-                'error' => $e->getMessage(),
-            ]);
-            return '';
-        }
+        return $result['tx_aigelb_agentid'] ?? '';
     }
 
     /**
@@ -116,38 +84,55 @@ final readonly class AIGelbService {
             $apiUrl = getenv(self::API_URL_ENV) . '/api/conversation';
 
             $data = [
-                'headlessAgentId' => getenv(self::AGENT_ID_ENV)
+                'headlessAgentId' => $this->getAgentId()
             ];
 
             $response = $this->sendApiRequest($apiUrl, 'POST', $data);
             $contents = json_decode($response->getBody()->getContents());
 
             $this->logger->info('Conversation created successfully', [
-                'agentId' => getenv(self::AGENT_ID_ENV),
+                'agentId' => $this->getAgentId(),
                 'conversationId' => $contents->conversation_id
             ]);
 
             return $contents->conversation_id;
         } catch (\Exception $e) {
             $this->logger->error('Failed to create conversation', [
-                'agentId' => getenv(self::AGENT_ID_ENV),
+                'agentId' => $this->getAgentId(),
                 'error' => $e->getMessage(),
             ]);
             return '';
         }
     }
 
+    /**
+     * Stream agent response with automatic agent ID resolution
+     *
+     * @param string $userInput User question/input
+     * @param string $language Language locale (e.g., 'de-DE')
+     * @param string $conversationId Conversation identifier
+     * @return string AI response
+     */
+    public function streamAgent(
+        string $userInput,
+        string $language,
+        string $conversationId
+    ): string {
+        $agentId = $this->getAgentId();
+
+        return $this->streamAgentWithId($agentId, $userInput, $language, $conversationId);
+    }
 
     /**
      * Sends a message to the AI agent and streams the response
      *
      * @param string $agentId The unique identifier of the agent
-     * @param string $message The user message to send
+     * @param string $userInput The user message to send
      * @param string $language The language locale (e.g., 'en-US', 'de-DE')
      * @param string $conversationId The conversation ID to maintain context
      * @return string The streamed AI response
      */
-    public function streamAgent(string $agentId, string $message, string $language, string $conversationId): string
+    private function streamAgentWithId(string $agentId, string $userInput, string $language, string $conversationId): string
     {
         try {
             // Use the correct API URL from documentation
@@ -155,9 +140,9 @@ final readonly class AIGelbService {
 
             // Build request data according to API specification
             $data = [
-                'message' => $message,
+                'message' => $userInput,
                 'language' => $language,
-                'headlessAgentId' => getenv(self::AGENT_ID_ENV) ?: $agentId,
+                'headlessAgentId' => $this->getAgentId(),
                 'conversation_id' => $conversationId,
             ];
 
@@ -177,7 +162,7 @@ final readonly class AIGelbService {
             $this->logger->info('AI agent response received successfully', [
                 'agentId' => $agentId,
                 'conversationId' => $conversationId,
-                'messageLength' => strlen($message),
+                'messageLength' => strlen($userInput),
                 'responseLength' => strlen($result),
             ]);
 
@@ -186,7 +171,7 @@ final readonly class AIGelbService {
             $this->logger->error('Failed to stream agent response', [
                 'agentId' => $agentId,
                 'conversationId' => $conversationId,
-                'message' => $message,
+                'message' => $userInput,
                 'language' => $language,
                 'error' => $e->getMessage(),
             ]);
@@ -233,28 +218,24 @@ final readonly class AIGelbService {
         }
     }
 
-    public function hasAgent(): string {
+    /**
+     * Get predefined questions from database
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getPredefinedQuestions(): array
+    {
         $result = $this->connectionPool
-            ->getConnectionForTable('tt_content')
+            ->getConnectionForTable('tx_aigelb_domain_model_questions')
             ->select(
-                ['tx_aigelb_agentid'],
-                'tx_aigelb_domain_model_agent',
-                [],
+                ['question'],
+                'tx_aigelb_domain_model_questions',
+                []
             )
-            ->fetchAssociative();
+            ->fetchAllAssociative();
 
-        return $result === false ? '' : $result['tx_aigelb_agentid'];
+        return $result ?: [];
     }
 
-    public function saveAgentId(string $agentId): void {
-        $this->connectionPool
-            ->getConnectionForTable('tt_content')
-            ->insert(
-                'tx_aigelb_domain_model_agent',
-                [
-                    'tx_aigelb_agentid' => $agentId,
-                    'crdate' => time(),
-                ],
-            );
-    }
+
 }

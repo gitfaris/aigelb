@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace IGelb\Aigelb\Controller;
 
 use IGelb\Aigelb\Service\AIGelbService;
+use IGelb\Aigelb\Service\LanguageService;
 use Psr\Http\Message\ResponseInterface;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 /**
@@ -16,8 +15,8 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 final class AIController extends ActionController
 {
     public function __construct(
-        private readonly ConnectionPool $connectionPool,
         private readonly AIGelbService $aIGelbService,
+        private readonly LanguageService $languageService,
     ) {}
 
     /**
@@ -53,12 +52,11 @@ final class AIController extends ActionController
                 return $this->htmlResponse();
             }
 
-            // Get language from current site context
-            $language = $this->getCurrentLanguage();
+            // Get language from language service
+            $language = $this->languageService->getSupportedLanguageOrFallback($this->request);
 
             // Process AI response
             $response = $this->aIGelbService->streamAgent(
-                $this->getAgentId(),
                 $userInput,
                 $language,
                 $conversationId
@@ -74,59 +72,12 @@ final class AIController extends ActionController
     }
 
     /**
-     * Get the current agent ID from database or environment
-     */
-    protected function getAgentId(): string
-    {
-        // Priority: Environment variable first, then database
-        $envAgentId = getenv('AIGELB_AGENTID');
-        if ($envAgentId !== false && !empty($envAgentId)) {
-            return $envAgentId;
-        }
-
-        $result = $this->connectionPool
-            ->getConnectionForTable('tt_content')
-            ->select(
-                ['tx_aigelb_agentid'],
-                'tx_aigelb_domain_model_agent',
-                []
-            )
-            ->fetchAssociative();
-
-        return $result['tx_aigelb_agentid'] ?? '';
-    }
-
-    /**
      * Get predefined questions from database
      *
      * @return array<int, array<string, mixed>>
      */
     protected function getQuestions(): array
     {
-        $result = $this->connectionPool
-            ->getConnectionForTable('tx_aigelb_domain_model_questions')
-            ->select(
-                ['question'],
-                'tx_aigelb_domain_model_questions',
-                []
-            )
-            ->fetchAllAssociative();
-
-        return $result ?: [];
-    }
-
-    /**
-     * Get current language locale for AI processing
-     */
-    protected function getCurrentLanguage(): string
-    {
-        /** @var SiteLanguage|null $language */
-        $language = $this->request->getAttribute('language');
-
-        if ($language === null) {
-            return 'de-DE'; // Default fallback
-        }
-
-        return $language->getLocale()->__toString();
+        return $this->aIGelbService->getPredefinedQuestions();
     }
 }
