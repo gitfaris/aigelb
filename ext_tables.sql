@@ -12,4 +12,5 @@ CREATE TABLE pages (
 	tx_aigelb_language VARCHAR(2) DEFAULT '' NOT NULL,
 	tx_aigelb_lastupdated INT(11) DEFAULT '0' NOT NULL,
 	tx_aigelb_knowledgeid VARCHAR(255) DEFAULT '' NOT NULL,
+	tx_aigelb_indexpage TINYINT(1) DEFAULT '0' NOT NULL,
 );
