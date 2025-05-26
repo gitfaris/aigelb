@@ -10,12 +10,12 @@ use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 /**
- * AI Controller for handling chatbot interactions
+ * AI Chatbot Controller for handling chatbot interactions
  *
  * Frontend controller managing chat interface, conversation handling,
  * and user interactions with AI-Gelb service.
  */
-final class AIController extends ActionController
+final class AIChatbotController extends ActionController
 {
     /**
      * Constructor with dependency injection

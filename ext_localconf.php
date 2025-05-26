@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use IGelb\Aigelb\Controller\AIController;
+use IGelb\Aigelb\Controller\AIChatbotController;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 defined('TYPO3') || exit;
@@ -19,8 +19,8 @@ defined('TYPO3') || exit;
     ExtensionUtility::configurePlugin(
         'aigelb',
         'Aigelbframework',
-        [AIController::class => 'chatbot'],
-        [AIController::class => 'chatbot'],
+        [AIChatbotController::class => 'chatbot'],
+        [AIChatbotController::class => 'chatbot'],
         ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
     );
 
