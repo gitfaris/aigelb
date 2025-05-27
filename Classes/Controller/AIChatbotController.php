@@ -17,6 +17,8 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
  */
 final class AIChatbotController extends ActionController
 {
+    private const SESSION_KEY_CONVERSATION_ID = 'aigelb_conversation_id';
+
     /**
      * Constructor with dependency injection
      *
@@ -41,10 +43,11 @@ final class AIChatbotController extends ActionController
      */
     public function chatbotAction(): ResponseInterface
     {
-        // Initialize or retrieve conversation ID for session continuity
-        $conversationId = $this->request->hasArgument('conversationId')
-            ? (string)$this->request->getArgument('conversationId')
-            : $this->aIGelbService->createConversation();
+        // Start session if not already started
+        $this->ensureSessionStarted();
+
+        // Get conversation ID from session or create new one
+        $conversationId = $this->getCurrentConversationId();
 
         $this->view->assign('conversationId', $conversationId);
 
@@ -86,7 +89,66 @@ final class AIChatbotController extends ActionController
             $this->view->assign('aiResponse', $response);
         }
 
+        // Handle new conversation request (clear session)
+        if ($this->request->hasArgument('newConversation') && $this->request->getArgument('newConversation') === '1') {
+            $this->startNewConversation();
+            // Redirect to avoid form resubmission
+            return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+        }
+
         return $this->htmlResponse();
+    }
+
+    /**
+     * Get current conversation ID from session or create new one
+     *
+     * @return string Conversation ID
+     */
+    private function getCurrentConversationId(): string
+    {
+        // Check if conversation ID is passed as argument (form submission)
+        if ($this->request->hasArgument('conversationId')) {
+            $conversationId = (string)$this->request->getArgument('conversationId');
+            // Store in session for persistence
+            $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $conversationId;
+            return $conversationId;
+        }
+
+        // Check session for existing conversation
+        if (!empty($_SESSION[self::SESSION_KEY_CONVERSATION_ID])) {
+            return $_SESSION[self::SESSION_KEY_CONVERSATION_ID];
+        }
+
+        // Create new conversation and store in session
+        $conversationId = $this->aIGelbService->createConversation();
+        $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $conversationId;
+
+        return $conversationId;
+    }
+
+    /**
+     * Start a new conversation (clear session)
+     */
+    private function startNewConversation(): void
+    {
+        $this->ensureSessionStarted();
+
+        // Remove conversation ID from session
+        unset($_SESSION[self::SESSION_KEY_CONVERSATION_ID]);
+
+        // Create new conversation immediately
+        $newConversationId = $this->aIGelbService->createConversation();
+        $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $newConversationId;
+    }
+
+    /**
+     * Ensure PHP session is started
+     */
+    private function ensureSessionStarted(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     /**
