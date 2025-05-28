@@ -1,5 +1,6 @@
 CREATE TABLE tx_aigelb_domain_model_agent (
-	tx_aigelb_agentid VARCHAR(255) DEFAULT '' NOT NULL
+	tx_aigelb_agentid VARCHAR(255) DEFAULT '' NOT NULL,
+	title VARCHAR(255) DEFAULT '' NOT NULL
 );
 
 CREATE TABLE tx_aigelb_domain_model_questions (

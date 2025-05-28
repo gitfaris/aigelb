@@ -3,7 +3,9 @@
 return [
     'ctrl' => [
         'title' => 'LLL:EXT:aigelb/Resources/Private/Language/locallang_db.xlf:tx_aigelb_domain_model_agent',
-        'label' => 'tx_aigelb_agentid',
+        'label' => 'title',
+        'label_alt' => 'tx_aigelb_agentid',
+        'label_alt_force' => false,
         'tstamp' => 'tstamp',
         'crdate' => 'crdate',
         'sortby' => 'sorting',
@@ -17,11 +19,11 @@ return [
             'starttime' => 'starttime',
             'endtime' => 'endtime',
         ],
-        'searchFields' => 'tx_aigelb_agentid',
+        'searchFields' => 'title,tx_aigelb_agentid',
         'iconfile' => 'EXT:aigelb/Resources/Public/Icons/tx_aigelb_domain_model_agent.gif',
     ],
     'types' => [
-        '1' => ['showitem' => 'sys_language_uid, l10n_parent, l10n_diffsource, hidden, tx_aigelb_agentid, --div--;LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:tabs.access, starttime, endtime'],
+        '1' => ['showitem' => 'sys_language_uid, l10n_parent, l10n_diffsource, hidden, title, tx_aigelb_agentid, --div--;LLL:EXT:frontend/Resources/Private/Language/locallang_ttc.xlf:tabs.access, starttime, endtime'],
     ],
     'columns' => [
         'sys_language_uid' => [
@@ -88,14 +90,24 @@ return [
             ],
         ],
 
+        'title' => [
+            'exclude' => false,
+            'label' => 'LLL:EXT:aigelb/Resources/Private/Language/locallang_db.xlf:tx_aigelb_domain_model_agent.title',
+            'config' => [
+                'type' => 'input',
+                'size' => 40,
+                'eval' => 'trim,required',
+                'max' => 255,
+            ],
+        ],
+
         'tx_aigelb_agentid' => [
-            'exclude' => true,
+            'exclude' => false,
             'label' => 'LLL:EXT:aigelb/Resources/Private/Language/locallang_db.xlf:tx_aigelb_domain_model_agent.agentid',
             'config' => [
                 'type' => 'input',
                 'size' => 40,
-                'eval' => 'trim',
-                'readOnly' => true,
+                'eval' => 'trim,required',
             ],
         ],
     ],

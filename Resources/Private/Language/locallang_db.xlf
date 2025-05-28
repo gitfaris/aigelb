@@ -15,13 +15,7 @@
 			<trans-unit id="tx_aigelb_indexpage">
 				<source>Index page</source>
 			</trans-unit>
-			<trans-unit id="generator">
-				<source>Prompt</source>
-			</trans-unit>
 			<trans-unit id="tx_aigelb_knowledgebase">
-				<source>Knowledgebase (URL)</source>
-			</trans-unit>
-			<trans-unit id="generator">
 				<source>Knowledgebase (URL)</source>
 			</trans-unit>
 			<trans-unit id="tx_aigelb_language">
@@ -30,14 +24,20 @@
 			<trans-unit id="tx_aigelb_lastupdated">
 				<source>Last updated (Internal)</source>
 			</trans-unit>
+			<trans-unit id="tx_aigelb_knowledgeid">
+				<source>Knowledge ID (Internal)</source>
+			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent">
 				<source>Agent</source>
 			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_questions">
 				<source>Questions</source>
 			</trans-unit>
+			<trans-unit id="tx_aigelb_domain_model_agent.title">
+				<source>Agent Title</source>
+			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent.agentid">
-				<source>ID (Internal)</source>
+				<source>Agent ID (Internal)</source>
 			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent.lastupdated">
 				<source>Last updated (Internal)</source>
@@ -47,9 +47,6 @@
 			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent.question">
 				<source>Question</source>
-			</trans-unit>
-			<trans-unit id="generator">
-				<source>Language</source>
 			</trans-unit>
 		</body>
 	</file>
