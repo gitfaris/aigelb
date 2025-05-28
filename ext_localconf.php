@@ -18,7 +18,7 @@ defined('TYPO3') || exit;
 
     ExtensionUtility::configurePlugin(
         'aigelb',
-        'Aigelbframework',
+        'AigelbChatbot',
         [AIChatbotController::class => 'chatbot'],
         [AIChatbotController::class => 'chatbot'],
         ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT

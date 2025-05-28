@@ -7,7 +7,7 @@ defined('TYPO3') or die();
 (static function (): void {
     $pluginKey = ExtensionUtility::registerPlugin(
         'aigelb',
-        'Aigelbframework',
+        'AigelbChatbot',
         'AI Gelb FrontEnd Plugin',
     );
 })();
