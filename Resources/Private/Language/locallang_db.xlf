@@ -3,6 +3,7 @@
 	<file source-language="en" datatype="plaintext" original="EXT:aigelb/Resources/Private/Language/locallang_db.xlf" date="2025-02-11T10:01:51Z" product-name="aigelb">
 		<header/>
 		<body>
+			<!-- Existing labels -->
 			<trans-unit id="aigelb_tabheader">
 				<source>AI-Gelb</source>
 			</trans-unit>
@@ -47,6 +48,17 @@
 			</trans-unit>
 			<trans-unit id="tx_aigelb_domain_model_agent.question">
 				<source>Question</source>
+			</trans-unit>
+
+			<!-- Flexform Labels -->
+			<trans-unit id="flexform.chatbot.sheet.general">
+				<source>General Settings</source>
+			</trans-unit>
+			<trans-unit id="flexform.chatbot.agent">
+				<source>Select Agent</source>
+			</trans-unit>
+			<trans-unit id="flexform.chatbot.agent.pleaseSelect">
+				<source>Please select an agent...</source>
 			</trans-unit>
 		</body>
 	</file>

@@ -43,6 +43,17 @@ final class AIChatbotController extends ActionController
      */
     public function chatbotAction(): ResponseInterface
     {
+        // FlexForm settings are automatically available in $this->settings
+        $this->view->assign('settings', $this->settings);
+
+        // Get content element data (header, subheader, bodytext) from configurationManager
+        $contentObjectData = $this->configurationManager->getContentObject()->data;
+        $this->view->assign('data', $contentObjectData);
+
+        // Get selected agent from FlexForm settings
+        $selectedAgentId = $this->settings['agent'] ?? 0;
+        $this->view->assign('selectedAgentId', $selectedAgentId);
+
         // Start session if not already started
         $this->ensureSessionStarted();
 

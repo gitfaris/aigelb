@@ -2,6 +2,30 @@
 
 <div class="aigelb-chatbot-container">
 
+    <!-- Header with tt_content fields -->
+    <div class="aigelb-chatbot-header">
+        <f:if condition="{data.header}">
+            <h2 class="aigelb-chatbot-title">{data.header}</h2>
+        </f:if>
+
+        <f:if condition="{data.subheader}">
+            <h3 class="aigelb-chatbot-subtitle">{data.subheader}</h3>
+        </f:if>
+
+        <f:if condition="{data.bodytext}">
+
+            <f:format.html>{data.bodytext}</f:format.html>
+
+        </f:if>
+    </div>
+
+    <!-- Debug: Selected Agent ID (kann später entfernt werden) -->
+    <f:if condition="{selectedAgentId}">
+        <div class="alert alert-info">
+            <small>Selected Agent ID: {selectedAgentId}</small>
+        </div>
+    </f:if>
+
     <!-- Error Messages -->
     <f:if condition="{hasError}">
         <div class="alert alert-danger" role="alert">
@@ -69,7 +93,7 @@
 
     <!-- Main Chat Form -->
     <div class="container">
-        <f:form action="chatbot" controller="AI" method="post" class="aigelb-form">
+        <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form">
             <!-- Hidden conversation ID for session tracking -->
             <f:if condition="{conversationId}">
                 <f:form.hidden name="conversationId" value="{conversationId}" />
@@ -80,7 +104,7 @@
                     <f:form.textfield
                         name="userinput"
                         value=""
-                        placeholder="Ask me anything..."
+                        placeholder="{f:if(condition: data.header, then: 'Ask {data.header}...', else: 'Ask me anything...')}"
                         class="form-control"
                         required="required"
                         maxlength="1000"
@@ -102,7 +126,7 @@
             <div class="col-12 text-center">
                 <f:link.action
                     action="chatbot"
-                    controller="AI"
+                    controller="AIChatbot"
                     arguments="{newConversation: 1}"
                     class="btn btn-outline-secondary"
                 >
@@ -114,7 +138,7 @@
 
 </div>
 
-<!-- Optional: Add some custom CSS for better styling -->
+<!-- Enhanced CSS -->
 <style>
     .aigelb-chatbot-container {
         max-width: 800px;
@@ -122,14 +146,47 @@
         padding: 20px;
     }
 
+    .aigelb-chatbot-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .aigelb-chatbot-title {
+        margin: 0 0 15px 0;
+        font-size: 2rem;
+        font-weight: 300;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .aigelb-chatbot-subtitle {
+        margin: 0 0 15px 0;
+        font-size: 1.3rem;
+        font-weight: 400;
+        opacity: 0.9;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .aigelb-chatbot-description {
+        font-size: 1rem;
+        opacity: 0.9;
+        line-height: 1.5;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
     .aigelb-history-title {
         color: #333;
         margin-bottom: 20px;
+        margin-top: 30px;
     }
 
     .aigelb-message-header {
         display: flex;
-        justify-content: between;
+        justify-content: space-between;
         align-items: center;
         margin-bottom: 10px;
     }
@@ -164,6 +221,10 @@
 
     .aigelb-form {
         margin-top: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
     }
 
     .btn-outline-secondary {
@@ -179,6 +240,14 @@
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
+        .aigelb-chatbot-title {
+            font-size: 1.5rem;
+        }
+
+        .aigelb-chatbot-subtitle {
+            font-size: 1.1rem;
+        }
+
         .col-10, .col-2 {
             flex: 0 0 100%;
             max-width: 100%;
@@ -188,5 +257,5 @@
             margin-top: 10px;
         }
     }
-    </style>
+</style>
 </html>
