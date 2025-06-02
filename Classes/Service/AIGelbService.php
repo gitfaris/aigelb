@@ -76,7 +76,7 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Get default agent ID with priority: Environment > Database
+     * Get default agent ID from environment variable only
      *
      * This is used as fallback when no specific agent ID is provided
      *
@@ -84,23 +84,13 @@ final readonly class AIGelbService {
      */
     public function getAgentId(): string
     {
-        // Priority 1: Check environment variable
+        // Only check environment variable
         $envAgentId = getenv(self::AGENT_ID_ENV);
         if ($envAgentId !== false && !empty($envAgentId)) {
             return $envAgentId;
         }
 
-        // Priority 2: Database fallback
-        $result = $this->connectionPool
-            ->getConnectionForTable('tx_aigelb_domain_model_agent')
-            ->select(
-                ['tx_aigelb_agentid'],
-                'tx_aigelb_domain_model_agent',
-                []
-            )
-            ->fetchAssociative();
-
-        return $result['tx_aigelb_agentid'] ?? '';
+        return '';
     }
 
     /**
