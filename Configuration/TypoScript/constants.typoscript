@@ -1,0 +1,35 @@
+# AI-Gelb Extension Constants
+# These constants can be overridden in the TYPO3 backend via Template module
+
+plugin.tx_aigelb {
+  # Path settings
+  view {
+    # cat=plugin.tx_aigelb/file; type=string; label=Path to template root (FE)
+    templateRootPath = EXT:aigelb/Resources/Private/Frontend/Templates/
+
+    # cat=plugin.tx_aigelb/file; type=string; label=Path to template partials (FE)
+    partialRootPath = EXT:aigelb/Resources/Private/Frontend/Partials/
+
+    # cat=plugin.tx_aigelb/file; type=string; label=Path to template layouts (FE)
+    layoutRootPath = EXT:aigelb/Resources/Private/Frontend/Layouts/
+  }
+
+  # CSS and JS settings
+  # cat=plugin.tx_aigelb/enable; type=boolean; label=Include Chatbot CSS
+  includeCSS = 1
+
+  # cat=plugin.tx_aigelb/enable; type=boolean; label=Include Chatbot JS
+  includeJS = 1
+
+  # cat=plugin.tx_aigelb/file; type=string; label=Path to CSS file
+  cssFile = EXT:aigelb/Resources/Public/Css/Chatbot.css
+
+  # cat=plugin.tx_aigelb/file; type=string; label=Path to JS file
+  jsFile = EXT:aigelb/Resources/Public/JavaScript/Chatbot.js
+}
+
+# Backend module settings
+module.tx_aigelb {
+  # cat=module.tx_aigelb/file; type=string; label=Path to backend template root
+  templateRootPath = EXT:aigelb/Resources/Private/Templates/Backend/
+}

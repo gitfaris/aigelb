@@ -1,13 +1,14 @@
 plugin.tx_aigelb {
   view {
-    templateRootPaths.0 = EXT:aigelb/Resources/Private/Frontend/Templates/
-    partialRootPaths.0 = EXT:aigelb/Resources/Private/Frontend/Partials/
-    layoutRootPaths.0 = EXT:aigelb/Resources/Private/Frontend/Layouts/
+    templateRootPaths.0 = {$plugin.tx_aigelb.view.templateRootPath}
+    partialRootPaths.0 = {$plugin.tx_aigelb.view.partialRootPath}
+    layoutRootPaths.0 = {$plugin.tx_aigelb.view.layoutRootPath}
   }
 
   mvc {
     callDefaultActionIfActionCantBeResolved = 1
   }
+
 }
 
 # Rendering of content elements
@@ -16,4 +17,26 @@ lib.tx_aigelb.contentElementRendering {
   tables = tt_content
   source.current = 1
   dontCheckPid = 1
+}
+
+# Include CSS for AI-Gelb Chatbot (conditional on constant)
+[{$plugin.tx_aigelb.includeCSS} == 1]
+  page.includeCSS {
+    aigelb_chatbot = {$plugin.tx_aigelb.cssFile}
+    aigelb_chatbot {
+      media = all
+      forceOnTop = 0
+      title = AI-Gelb Chatbot Styles
+    }
+  }
+
+# Include JS for AI-Gelb Chatbot (conditional on constant)
+[{$plugin.tx_aigelb.includeJS} == 1]
+  page.includeJSFooter {
+    aigelb_chatbot = {$plugin.tx_aigelb.jsFile}
+    aigelb_chatbot {
+      forceOnTop = 0
+      title = AI-Gelb Chatbot Scripts
+    }
+  }
 }
