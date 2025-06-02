@@ -2,20 +2,20 @@
 
 <div class="aigelb-chatbot-container">
 
-    <!-- Header with tt_content fields -->
+    <!-- Header with FlexForm settings -->
     <div class="aigelb-chatbot-header">
-        <f:if condition="{data.header}">
-            <h2 class="aigelb-chatbot-title">{data.header}</h2>
+        <f:if condition="{settings.header}">
+            <h2 class="aigelb-chatbot-title">{settings.header}</h2>
         </f:if>
 
-        <f:if condition="{data.subheader}">
-            <h3 class="aigelb-chatbot-subtitle">{data.subheader}</h3>
+        <f:if condition="{settings.subheader}">
+            <h3 class="aigelb-chatbot-subtitle">{settings.subheader}</h3>
         </f:if>
 
-        <f:if condition="{data.bodytext}">
-
-            <f:format.html>{data.bodytext}</f:format.html>
-
+        <f:if condition="{settings.bodytext}">
+            <div class="aigelb-chatbot-description">
+                <f:format.html>{settings.bodytext}</f:format.html>
+            </div>
         </f:if>
     </div>
 
@@ -104,7 +104,7 @@
                     <f:form.textfield
                         name="userinput"
                         value=""
-                        placeholder="{f:if(condition: data.header, then: 'Ask {data.header}...', else: 'Ask me anything...')}"
+                        placeholder="{f:if(condition: settings.header, then: 'Ask {settings.header}...', else: 'Ask me anything...')}"
                         class="form-control"
                         required="required"
                         maxlength="1000"
@@ -147,10 +147,9 @@
     }
 
     .aigelb-chatbot-header {
-        text-align: center;
+        text-align: left;
         margin-bottom: 30px;
         padding: 20px;
-        background: linear-gradient(135deg, #007bff, #0056b3);
         border-radius: 12px;
         color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

@@ -60,6 +60,17 @@
 			<trans-unit id="flexform.chatbot.agent.pleaseSelect">
 				<source>Please select an agent...</source>
 			</trans-unit>
+
+			<!-- New FlexForm Labels for Header, Subheader, Bodytext -->
+			<trans-unit id="flexform.chatbot.header">
+				<source>Chatbot Title</source>
+			</trans-unit>
+			<trans-unit id="flexform.chatbot.subheader">
+				<source>Chatbot Subtitle</source>
+			</trans-unit>
+			<trans-unit id="flexform.chatbot.bodytext">
+				<source>Chatbot Description</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

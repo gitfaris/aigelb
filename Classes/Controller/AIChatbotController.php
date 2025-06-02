@@ -46,10 +46,6 @@ final class AIChatbotController extends ActionController
         // FlexForm settings are automatically available in $this->settings
         $this->view->assign('settings', $this->settings);
 
-        // Get content element data (header, subheader, bodytext) from configurationManager
-        $contentObjectData = $this->configurationManager->getContentObject()->data;
-        $this->view->assign('data', $contentObjectData);
-
         // Get selected agent from FlexForm settings
         $selectedAgentId = $this->settings['agent'] ?? 0;
         $this->view->assign('selectedAgentId', $selectedAgentId);
