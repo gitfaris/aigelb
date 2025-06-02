@@ -66,9 +66,10 @@ final class AIChatbotController extends ActionController
         $conversationId = $this->getCurrentConversationId($selectedAgentId);
 
         $this->view->assign('conversationId', $conversationId);
+        $this->view->assign('selectedAgentId', $selectedAgentId);
 
-        // Load predefined questions for quick selection UI
-        $questions = $this->getQuestions();
+        // Load predefined questions for quick selection UI (agent-specific)
+        $questions = $this->getQuestions($selectedAgentUid);
         $this->view->assign('questions', $questions);
 
         // Load existing conversation history if available
@@ -259,14 +260,15 @@ final class AIChatbotController extends ActionController
     }
 
     /**
-     * Load predefined questions from database
+     * Load predefined questions from database for specific agent
      *
-     * Retrieves backend-managed questions for frontend quick selection.
+     * Retrieves backend-managed questions for frontend quick selection for a specific agent.
      *
+     * @param int|null $agentUid Agent UID to filter questions by
      * @return array<int, array<string, mixed>> Array of question objects
      */
-    protected function getQuestions(): array
+    protected function getQuestions(int $agentUid = null): array
     {
-        return $this->aIGelbService->getPredefinedQuestions();
+        return $this->aIGelbService->getPredefinedQuestions($agentUid);
     }
 }

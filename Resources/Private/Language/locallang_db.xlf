@@ -50,6 +50,17 @@
 				<source>Question</source>
 			</trans-unit>
 
+			<!-- Updated Questions Labels -->
+			<trans-unit id="tx_aigelb_domain_model_questions.question">
+				<source>Question Text</source>
+			</trans-unit>
+			<trans-unit id="tx_aigelb_domain_model_questions.agent">
+				<source>Associated Agent</source>
+			</trans-unit>
+			<trans-unit id="tx_aigelb_domain_model_questions.agent.pleaseSelect">
+				<source>Please select an agent...</source>
+			</trans-unit>
+
 			<!-- Flexform Labels -->
 			<trans-unit id="flexform.chatbot.sheet.general">
 				<source>General Settings</source>

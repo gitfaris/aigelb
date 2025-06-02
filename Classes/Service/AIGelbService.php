@@ -253,24 +253,63 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Load predefined questions from TYPO3 database
+     * Load predefined questions from TYPO3 database for a specific agent
      *
-     * Enables backend-managed quick selection buttons in frontend.
+     * Enables backend-managed quick selection buttons in frontend for specific agents.
      *
+     * @param int|null $agentUid Agent UID to filter questions by
      * @return array<int, array<string, mixed>> Array of question objects
      */
-    public function getPredefinedQuestions(): array
+    public function getPredefinedQuestions(int $agentUid = null): array
     {
-        $result = $this->connectionPool
-            ->getConnectionForTable('tx_aigelb_domain_model_questions')
-            ->select(
-                ['question'],
-                'tx_aigelb_domain_model_questions',
-                []
-            )
-            ->fetchAllAssociative();
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tx_aigelb_domain_model_questions');
+
+        $queryBuilder
+            ->select('question', 'agent')
+            ->from('tx_aigelb_domain_model_questions');
+
+        // Filter by agent if provided
+        if ($agentUid !== null && $agentUid > 0) {
+            $queryBuilder->where(
+                $queryBuilder->expr()->eq('agent', $queryBuilder->createNamedParameter($agentUid, \PDO::PARAM_INT))
+            );
+        }
+
+        $queryBuilder->orderBy('sorting', 'ASC');
+
+        $result = $queryBuilder->executeQuery()->fetchAllAssociative();
 
         return $result ?: [];
+    }
+
+    /**
+     * Load predefined questions by agent ID string (for API compatibility)
+     *
+     * @param string $agentId Agent ID string to match against
+     * @return array<int, array<string, mixed>> Array of question objects
+     */
+    public function getPredefinedQuestionsByAgentId(string $agentId): array
+    {
+        if (empty($agentId)) {
+            return [];
+        }
+
+        // First get the agent UID by agent ID
+        $agentResult = $this->connectionPool
+            ->getConnectionForTable('tx_aigelb_domain_model_agent')
+            ->select(
+                ['uid'],
+                'tx_aigelb_domain_model_agent',
+                ['tx_aigelb_agentid' => $agentId]
+            )
+            ->fetchAssociative();
+
+        if (!$agentResult) {
+            return [];
+        }
+
+        // Then get questions for this agent
+        return $this->getPredefinedQuestions((int)$agentResult['uid']);
     }
 
     // ... rest of the methods remain unchanged (addKnowledge, deleteKnowledge, etc. for command use)

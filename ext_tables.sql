@@ -4,7 +4,8 @@ CREATE TABLE tx_aigelb_domain_model_agent (
 );
 
 CREATE TABLE tx_aigelb_domain_model_questions (
-	question VARCHAR(255) DEFAULT '' NOT NULL
+	question TEXT,
+	agent INT(11) UNSIGNED DEFAULT '0' NOT NULL
 );
 
 CREATE TABLE pages (

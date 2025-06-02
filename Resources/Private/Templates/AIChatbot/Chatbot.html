@@ -2,6 +2,14 @@
 
 <div class="aigelb-chatbot-container">
 
+
+    <!-- Error Messages -->
+    <f:if condition="{hasError}">
+        <div class="alert alert-danger" role="alert">
+            <strong>Error:</strong> {errorMessage}
+        </div>
+    </f:if>
+
     <!-- Header with FlexForm settings -->
     <div class="aigelb-chatbot-header">
         <f:if condition="{settings.header}">
@@ -19,19 +27,7 @@
         </f:if>
     </div>
 
-    <!-- Debug: Selected Agent ID (kann später entfernt werden) -->
-    <f:if condition="{selectedAgentId}">
-        <div class="alert alert-info">
-            <small>Selected Agent ID: {selectedAgentId}</small>
-        </div>
-    </f:if>
 
-    <!-- Error Messages -->
-    <f:if condition="{hasError}">
-        <div class="alert alert-danger" role="alert">
-            <strong>Error:</strong> {errorMessage}
-        </div>
-    </f:if>
 
     <!-- Conversation History -->
     <f:if condition="{conversationMessages}">
@@ -134,6 +130,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Predefined Questions (Agent-specific) -->
+    <f:if condition="{questions}">
+        <div class="container mb-4">
+            <div class="row">
+                <div class="col-12">
+                    <h4>Quick Questions:</h4>
+                    <div class="d-flex flex-wrap gap-2">
+                        <f:for each="{questions}" as="question">
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm quick-question-btn"
+                                onclick="document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').value = '{question.question -> f:format.htmlspecialchars()}'; document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').focus();"
+                            >
+                                {question.question}
+                            </button>
+                        </f:for>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </f:if>
 
 </div>
 
