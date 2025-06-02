@@ -76,7 +76,9 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Get current agent ID with priority: Environment > Database
+     * Get default agent ID with priority: Environment > Database
+     *
+     * This is used as fallback when no specific agent ID is provided
      *
      * @return string Agent ID or empty string if not found
      */
@@ -102,30 +104,58 @@ final readonly class AIGelbService {
     }
 
     /**
+     * Get agent ID by database UID (for FlexForm selection)
+     *
+     * @param int $agentUid Database UID of the agent
+     * @return string Agent ID or empty string if not found
+     */
+    public function getAgentIdByUid(int $agentUid): string
+    {
+        if ($agentUid <= 0) {
+            return '';
+        }
+
+        $result = $this->connectionPool
+            ->getConnectionForTable('tx_aigelb_domain_model_agent')
+            ->select(
+                ['tx_aigelb_agentid'],
+                'tx_aigelb_domain_model_agent',
+                ['uid' => $agentUid]
+            )
+            ->fetchAssociative();
+
+        return $result['tx_aigelb_agentid'] ?? '';
+    }
+
+    /**
      * Create new conversation with AI-Gelb API
      *
+     * @param string|null $agentId Optional specific agent ID, falls back to default if not provided
      * @return string Conversation ID or empty string on failure
      */
-    public function createConversation(): string {
+    public function createConversation(string $agentId = null): string {
         try {
             $apiUrl = getenv(self::API_URL_ENV) . '/api/conversation';
 
+            // Use provided agent ID or fall back to default
+            $effectiveAgentId = $agentId ?: $this->getAgentId();
+
             $data = [
-                'headlessAgentId' => $this->getAgentId()
+                'headlessAgentId' => $effectiveAgentId
             ];
 
             $response = $this->sendApiRequest($apiUrl, 'POST', $data);
             $contents = json_decode($response->getBody()->getContents());
 
             $this->logger->info('Conversation created successfully', [
-                'agentId' => $this->getAgentId(),
+                'agentId' => $effectiveAgentId,
                 'conversationId' => $contents->conversation_id
             ]);
 
             return $contents->conversation_id;
         } catch (\Exception $e) {
             $this->logger->error('Failed to create conversation', [
-                'agentId' => $this->getAgentId(),
+                'agentId' => $agentId ?: $this->getAgentId(),
                 'error' => $e->getMessage(),
             ]);
             return '';
@@ -133,43 +163,30 @@ final readonly class AIGelbService {
     }
 
     /**
-     * Send user input to AI agent (public interface)
+     * Send user input to AI agent and get streaming response
      *
      * @param string $userInput User question/message
      * @param string $language Language locale (e.g., 'de-DE')
      * @param string $conversationId Conversation context ID
+     * @param string|null $agentId Optional specific agent ID from FlexForm, uses default if not provided
      * @return string AI response
      */
     public function streamAgent(
         string $userInput,
         string $language,
-        string $conversationId
+        string $conversationId,
+        string $agentId = null
     ): string {
-        $agentId = $this->getAgentId();
+        // Use provided agent ID or fall back to default
+        $effectiveAgentId = $agentId ?: $this->getAgentId();
 
-        return $this->streamAgentWithId($agentId, $userInput, $language, $conversationId);
-    }
-
-    /**
-     * Internal implementation for streaming AI responses
-     *
-     * Sends request to streaming endpoint and processes chunked response.
-     *
-     * @param string $agentId Unique agent identifier
-     * @param string $userInput User message
-     * @param string $language Response language
-     * @param string $conversationId Conversation context
-     * @return string Complete AI response
-     */
-    private function streamAgentWithId(string $agentId, string $userInput, string $language, string $conversationId): string
-    {
         try {
-            $apiUrl = getenv(self::API_URL_ENV) . '/api/stream/' . $agentId;
+            $apiUrl = getenv(self::API_URL_ENV) . '/api/stream/' . $effectiveAgentId;
 
             $data = [
                 'message' => $userInput,
                 'language' => $language,
-                'headlessAgentId' => $this->getAgentId(),
+                'headlessAgentId' => $effectiveAgentId,
                 'conversation_id' => $conversationId,
             ];
 
@@ -187,7 +204,7 @@ final readonly class AIGelbService {
             }
 
             $this->logger->info('AI agent response received successfully', [
-                'agentId' => $agentId,
+                'agentId' => $effectiveAgentId,
                 'conversationId' => $conversationId,
                 'messageLength' => strlen($userInput),
                 'responseLength' => strlen($result),
@@ -196,7 +213,7 @@ final readonly class AIGelbService {
             return $result;
         } catch (\Exception $e) {
             $this->logger->error('Failed to stream agent response', [
-                'agentId' => $agentId,
+                'agentId' => $effectiveAgentId,
                 'conversationId' => $conversationId,
                 'message' => $userInput,
                 'language' => $language,
@@ -265,4 +282,6 @@ final readonly class AIGelbService {
 
         return $result ?: [];
     }
+
+    // ... rest of the methods remain unchanged (addKnowledge, deleteKnowledge, etc. for command use)
 }

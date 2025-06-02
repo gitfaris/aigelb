@@ -46,15 +46,19 @@ final class AIChatbotController extends ActionController
         // FlexForm settings are automatically available in $this->settings
         $this->view->assign('settings', $this->settings);
 
-        // Get selected agent from FlexForm settings
-        $selectedAgentId = $this->settings['agent'] ?? 0;
-        $this->view->assign('selectedAgentId', $selectedAgentId);
+         // Get selected agent from FlexForm settings and resolve agent ID
+        $selectedAgentUid = (int)($this->settings['agent'] ?? 0);
+        $selectedAgentId = '';
+
+        if ($selectedAgentUid > 0) {
+            $selectedAgentId = $this->aIGelbService->getAgentIdByUid($selectedAgentUid);
+        }
 
         // Start session if not already started
         $this->ensureSessionStarted();
 
         // Get conversation ID from session or create new one
-        $conversationId = $this->getCurrentConversationId();
+        $conversationId = $this->getCurrentConversationId($selectedAgentId);
 
         $this->view->assign('conversationId', $conversationId);
 
@@ -83,11 +87,12 @@ final class AIChatbotController extends ActionController
             // Get appropriate language from current site context
             $language = $this->languageService->getSupportedLanguageOrFallback($this->request);
 
-            // Send user input to AI and get response
+            // Send user input to AI and get response using the selected agent
             $response = $this->aIGelbService->streamAgent(
                 $userInput,
                 $language,
-                $conversationId
+                $conversationId,
+                $selectedAgentId // Pass the agent ID from FlexForm
             );
 
             // Assign current interaction data to template
@@ -98,7 +103,7 @@ final class AIChatbotController extends ActionController
 
         // Handle new conversation request (clear session)
         if ($this->request->hasArgument('newConversation') && $this->request->getArgument('newConversation') === '1') {
-            $this->startNewConversation();
+            $this->startNewConversation($selectedAgentId);
             // Redirect to avoid form resubmission
             return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
         }
@@ -109,43 +114,52 @@ final class AIChatbotController extends ActionController
     /**
      * Get current conversation ID from session or create new one
      *
+     * @param string $agentId Agent ID to use for conversation creation
      * @return string Conversation ID
      */
-    private function getCurrentConversationId(): string
+    private function getCurrentConversationId(string $agentId): string
     {
+        // Create a unique session key for this specific agent
+        $sessionKey = self::SESSION_KEY_CONVERSATION_ID . '_' . md5($agentId);
+
         // Check if conversation ID is passed as argument (form submission)
         if ($this->request->hasArgument('conversationId')) {
             $conversationId = (string)$this->request->getArgument('conversationId');
             // Store in session for persistence
-            $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $conversationId;
+            $_SESSION[$sessionKey] = $conversationId;
             return $conversationId;
         }
 
-        // Check session for existing conversation
-        if (!empty($_SESSION[self::SESSION_KEY_CONVERSATION_ID])) {
-            return $_SESSION[self::SESSION_KEY_CONVERSATION_ID];
+        // Check session for existing conversation for this specific agent
+        if (!empty($_SESSION[$sessionKey])) {
+            return $_SESSION[$sessionKey];
         }
 
-        // Create new conversation and store in session
-        $conversationId = $this->aIGelbService->createConversation();
-        $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $conversationId;
+        // Create new conversation with specific agent and store in session
+        $conversationId = $this->aIGelbService->createConversation($agentId);
+        $_SESSION[$sessionKey] = $conversationId;
 
         return $conversationId;
     }
 
     /**
-     * Start a new conversation (clear session)
+     * Start a new conversation (clear session) for specific agent
+     *
+     * @param string $agentId Agent ID to create new conversation for
      */
-    private function startNewConversation(): void
+    private function startNewConversation(string $agentId): void
     {
         $this->ensureSessionStarted();
 
-        // Remove conversation ID from session
-        unset($_SESSION[self::SESSION_KEY_CONVERSATION_ID]);
+        // Create a unique session key for this specific agent
+        $sessionKey = self::SESSION_KEY_CONVERSATION_ID . '_' . md5($agentId);
 
-        // Create new conversation immediately
-        $newConversationId = $this->aIGelbService->createConversation();
-        $_SESSION[self::SESSION_KEY_CONVERSATION_ID] = $newConversationId;
+        // Remove conversation ID from session
+        unset($_SESSION[$sessionKey]);
+
+        // Create new conversation immediately with specific agent
+        $newConversationId = $this->aIGelbService->createConversation($agentId);
+        $_SESSION[$sessionKey] = $newConversationId;
     }
 
     /**
