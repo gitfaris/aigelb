@@ -2,7 +2,8 @@
       xmlns:aigelb="http://typo3.org/ns/IGelb/Aigelb/ViewHelpers"
       data-namespace-typo3-fluid="true">
 
-<div class="aigelb-chatbot-container" data-plugin-instance="{pluginInstanceId}">
+<div class="aigelb-chatbot-container">
+
 
     <!-- Error Messages -->
     <f:if condition="{hasError}">
@@ -27,6 +28,8 @@
             </div>
         </f:if>
     </div>
+
+
 
     <!-- Conversation History -->
     <f:if condition="{conversationMessages}">
@@ -88,16 +91,10 @@
     <!-- Main Chat Form -->
     <div class="container">
         <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form">
-            <!-- Hidden fields for plugin instance tracking -->
+            <!-- Hidden conversation ID for session tracking -->
             <f:if condition="{conversationId}">
                 <f:form.hidden name="conversationId" value="{conversationId}" />
             </f:if>
-
-            <!-- Critical: Plugin instance ID to identify which plugin sent the request -->
-            <f:form.hidden name="pluginInstanceId" value="{pluginInstanceId}" />
-
-            <!-- Optional: Agent ID for additional validation -->
-            <f:form.hidden name="selectedAgentId" value="{selectedAgentId}" />
 
             <div class="row mb-3">
                 <div class="col-10">
@@ -127,7 +124,7 @@
                 <f:link.action
                     action="chatbot"
                     controller="AIChatbot"
-                    arguments="{newConversation: 1, pluginInstanceId: pluginInstanceId}"
+                    arguments="{newConversation: 1}"
                     class="btn btn-outline-secondary"
                 >
                     <i class="fas fa-plus"></i> Start New Conversation
@@ -147,7 +144,7 @@
                             <button
                                 type="button"
                                 class="btn btn-outline-primary btn-sm quick-question-btn"
-                                onclick="fillQuestion_{pluginInstanceId}('{question.question -> f:format.htmlspecialchars()}')"
+                                onclick="document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').value = '{question.question -> f:format.htmlspecialchars()}'; document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').focus();"
                             >
                                 {question.question}
                             </button>
@@ -156,21 +153,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Plugin-specific JavaScript for question filling -->
-        <script>
-        function fillQuestion_{pluginInstanceId}(questionText) {
-            // Find the input field within this specific plugin instance
-            const container = document.querySelector('[data-plugin-instance="{pluginInstanceId}"]');
-            if (container) {
-                const inputField = container.querySelector('input[name*="[userinput]"]');
-                if (inputField) {
-                    inputField.value = questionText;
-                    inputField.focus();
-                }
-            }
-        }
-        </script>
     </f:if>
 
 </div>

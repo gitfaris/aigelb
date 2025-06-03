@@ -34,7 +34,7 @@ final class AIChatbotController extends ActionController
      * Main chatbot action handling display and response logic
      *
      * Manages complete chatbot workflow:
-     * - Creates/maintains conversation sessions per agent AND plugin instance
+     * - Creates/maintains conversation sessions per agent
      * - Loads conversation history and predefined questions
      * - Processes user input and generates AI responses
      * - Handles error states and validation
@@ -59,18 +59,14 @@ final class AIChatbotController extends ActionController
             $selectedAgentId = $this->aIGelbService->getAgentId();
         }
 
-        // Generate unique plugin instance ID based on current content element
-        $pluginInstanceId = $this->generatePluginInstanceId();
-
         // Start session if not already started
         $this->ensureSessionStarted();
 
-        // Get conversation ID from session or create new one (now plugin-specific)
-        $conversationId = $this->getCurrentConversationId($selectedAgentId, $pluginInstanceId);
+        // Get conversation ID from session or create new one (now agent-specific)
+        $conversationId = $this->getCurrentConversationId($selectedAgentId);
 
         $this->view->assign('conversationId', $conversationId);
         $this->view->assign('selectedAgentId', $selectedAgentId);
-        $this->view->assign('pluginInstanceId', $pluginInstanceId);
 
         // Load predefined questions for quick selection UI (agent-specific)
         $questions = $this->getQuestions($selectedAgentUid);
@@ -83,11 +79,8 @@ final class AIChatbotController extends ActionController
         }
         $this->view->assign('conversationMessages', $conversationMessages);
 
-        // Process user input if form was submitted AND it's for this specific plugin instance
-        if ($this->request->hasArgument('userinput') &&
-            $this->request->hasArgument('pluginInstanceId') &&
-            $this->request->getArgument('pluginInstanceId') === $pluginInstanceId) {
-
+        // Process user input if form was submitted
+        if ($this->request->hasArgument('userinput')) {
             $userInput = trim((string)$this->request->getArgument('userinput'));
 
             // Validate user input
@@ -114,13 +107,9 @@ final class AIChatbotController extends ActionController
             $this->view->assign('aiResponse', $response);
         }
 
-        // Handle new conversation request (clear session for specific agent + plugin instance)
-        if ($this->request->hasArgument('newConversation') &&
-            $this->request->getArgument('newConversation') === '1' &&
-            $this->request->hasArgument('pluginInstanceId') &&
-            $this->request->getArgument('pluginInstanceId') === $pluginInstanceId) {
-
-            $this->startNewConversation($selectedAgentId, $pluginInstanceId);
+        // Handle new conversation request (clear session for specific agent)
+        if ($this->request->hasArgument('newConversation') && $this->request->getArgument('newConversation') === '1') {
+            $this->startNewConversation($selectedAgentId);
             // Redirect to avoid form resubmission
             return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
         }
@@ -129,46 +118,19 @@ final class AIChatbotController extends ActionController
     }
 
     /**
-     * Generate unique plugin instance ID based on current content element
-     *
-     * @return string Unique identifier for this plugin instance
-     */
-    private function generatePluginInstanceId(): string
-    {
-        // Try to get current content element UID from configuration context
-        $contentObjectRenderer = $this->request->getAttribute('currentContentObject');
-
-        if ($contentObjectRenderer && isset($contentObjectRenderer->data['uid'])) {
-            $contentElementUid = $contentObjectRenderer->data['uid'];
-            return 'ce_' . $contentElementUid;
-        }
-
-        // Fallback: Generate based on plugin configuration and page
-        $pageUid = $GLOBALS['TSFE']->id ?? 0;
-        $pluginSignature = $this->request->getPluginName() . '_' . $this->request->getControllerName();
-        $configHash = md5(serialize($this->settings));
-
-        return sprintf('plugin_%d_%s_%s', $pageUid, $pluginSignature, substr($configHash, 0, 8));
-    }
-
-    /**
      * Get current conversation ID from session or create new one
-     * Now creates plugin-specific session keys to separate conversations per plugin instance
+     * Now creates agent-specific session keys to separate conversations per agent
      *
      * @param string $agentId Agent ID to use for conversation creation
-     * @param string $pluginInstanceId Unique plugin instance identifier
      * @return string Conversation ID
      */
-    private function getCurrentConversationId(string $agentId, string $pluginInstanceId): string
+    private function getCurrentConversationId(string $agentId): string
     {
-        // Create a unique session key for this specific agent + plugin instance
-        $sessionKey = $this->getPluginSpecificSessionKey($agentId, $pluginInstanceId);
+        // Create a unique session key for this specific agent
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
 
         // Check if conversation ID is passed as argument (form submission)
-        if ($this->request->hasArgument('conversationId') &&
-            $this->request->hasArgument('pluginInstanceId') &&
-            $this->request->getArgument('pluginInstanceId') === $pluginInstanceId) {
-
+        if ($this->request->hasArgument('conversationId')) {
             $conversationId = (string)$this->request->getArgument('conversationId');
 
             // Validate that this conversation ID belongs to the current agent
@@ -182,7 +144,7 @@ final class AIChatbotController extends ActionController
             }
         }
 
-        // Check session for existing conversation for this specific plugin instance
+        // Check session for existing conversation for this specific agent
         if (!empty($_SESSION[$sessionKey])) {
             $existingConversationId = $_SESSION[$sessionKey];
 
@@ -203,18 +165,17 @@ final class AIChatbotController extends ActionController
     }
 
     /**
-     * Generate plugin-specific session key
+     * Generate agent-specific session key
      *
      * @param string $agentId Agent ID
-     * @param string $pluginInstanceId Plugin instance identifier
-     * @return string Session key unique to this plugin instance
+     * @return string Session key unique to this agent
      */
-    private function getPluginSpecificSessionKey(string $agentId, string $pluginInstanceId): string
+    private function getAgentSpecificSessionKey(string $agentId): string
     {
-        // Create a unique session key for this specific agent + plugin instance
+        // Create a unique session key for this specific agent
+        // Using short hash to keep session key reasonable length
         $agentHash = substr(md5($agentId), 0, 8);
-        $instanceHash = substr(md5($pluginInstanceId), 0, 8);
-        return self::SESSION_KEY_CONVERSATION_ID . '_agent_' . $agentHash . '_instance_' . $instanceHash;
+        return self::SESSION_KEY_CONVERSATION_ID . '_agent_' . $agentHash;
     }
 
     /**
@@ -235,19 +196,18 @@ final class AIChatbotController extends ActionController
     }
 
     /**
-     * Start a new conversation (clear session) for specific agent + plugin instance
+     * Start a new conversation (clear session) for specific agent
      *
      * @param string $agentId Agent ID to create new conversation for
-     * @param string $pluginInstanceId Plugin instance identifier
      */
-    private function startNewConversation(string $agentId, string $pluginInstanceId): void
+    private function startNewConversation(string $agentId): void
     {
         $this->ensureSessionStarted();
 
-        // Create a unique session key for this specific agent + plugin instance
-        $sessionKey = $this->getPluginSpecificSessionKey($agentId, $pluginInstanceId);
+        // Create a unique session key for this specific agent
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
 
-        // Remove conversation ID from session for this specific plugin instance
+        // Remove conversation ID from session for this specific agent
         unset($_SESSION[$sessionKey]);
 
         // Create new conversation immediately with specific agent
@@ -256,7 +216,7 @@ final class AIChatbotController extends ActionController
     }
 
     /**
-     * Clear all conversations for all agents and plugin instances (optional utility method)
+     * Clear all conversations for all agents (optional utility method)
      */
     private function clearAllConversations(): void
     {
@@ -273,7 +233,7 @@ final class AIChatbotController extends ActionController
     /**
      * Get active conversation count (optional utility method)
      *
-     * @return int Number of active conversations across all plugin instances
+     * @return int Number of active conversations across all agents
      */
     private function getActiveConversationCount(): int
     {
