@@ -130,19 +130,31 @@ final class ConversationService
     /**
      * Update conversation history after user interaction
      */
-    public function updateConversationHistory(string $agentId, string $conversationId, string $lastMessage): void
+    public function updateConversationHistory(string $agentId, string $conversationId, string $userMessage): void
     {
         $history = $this->getConversationHistory($agentId);
 
-        // Generate title from first message if not exists
-        $title = $history[$conversationId]['title'] ?? $this->generateConversationTitle($lastMessage);
+        // Check if this is the first message for this conversation
+        $isFirstMessage = !isset($history[$conversationId]) || $history[$conversationId]['messageCount'] === 0;
+
+        // Generate title from first message if not exists or if this is the first message
+        $title = $history[$conversationId]['title'] ?? $this->generateConversationTitle($userMessage);
+        if ($isFirstMessage) {
+            $title = $this->generateConversationTitle($userMessage);
+        }
+
+        // Store first message if this is the first message
+        $firstMessage = $history[$conversationId]['firstMessage'] ?? '';
+        if ($isFirstMessage) {
+            $firstMessage = mb_substr($userMessage, 0, 100);
+        }
 
         // Update or create conversation entry
         $history[$conversationId] = [
             'id' => $conversationId,
             'title' => $title,
             'lastActivity' => time(),
-            'lastMessage' => mb_substr($lastMessage, 0, 100),
+            'firstMessage' => $firstMessage,
             'messageCount' => ($history[$conversationId]['messageCount'] ?? 0) + 1,
         ];
 
@@ -156,7 +168,8 @@ final class ConversationService
         $this->logger->debug('Conversation history updated', [
             'agentId' => $agentId,
             'conversationId' => $conversationId,
-            'messageCount' => $history[$conversationId]['messageCount']
+            'messageCount' => $history[$conversationId]['messageCount'],
+            'isFirstMessage' => $isFirstMessage
         ]);
     }
 
@@ -310,7 +323,7 @@ final class ConversationService
             'id' => $conversationId,
             'title' => 'New Conversation',
             'lastActivity' => time(),
-            'lastMessage' => '',
+            'firstMessage' => '',
             'messageCount' => 0,
         ];
 

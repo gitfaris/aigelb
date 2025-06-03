@@ -41,10 +41,10 @@
                                                 · {conversation.messageCount} messages
                                             </small>
                                         </div>
-                                        <f:if condition="{conversation.lastMessage}">
+                                        <f:if condition="{conversation.firstMessage}">
                                             <div class="conversation-preview">
                                                 <small class="text-muted">
-                                                    {conversation.lastMessage}
+                                                    {conversation.firstMessage}
                                                 </small>
                                             </div>
                                         </f:if>
@@ -225,7 +225,7 @@
                                     </button>
                                 </f:for>
                             </div>
-                        </div>
+                                        </div>
                     </f:if>
                 </div>
             </div>
