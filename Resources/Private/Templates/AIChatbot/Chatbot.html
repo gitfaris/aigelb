@@ -2,159 +2,235 @@
       xmlns:aigelb="http://typo3.org/ns/IGelb/Aigelb/ViewHelpers"
       data-namespace-typo3-fluid="true">
 
-<div class="aigelb-chatbot-container">
-
-
-    <!-- Error Messages -->
-    <f:if condition="{hasError}">
-        <div class="alert alert-danger" role="alert">
-            <strong>Error:</strong> {errorMessage}
-        </div>
-    </f:if>
-
-    <!-- Header with FlexForm settings -->
-    <div class="aigelb-chatbot-header">
-        <f:if condition="{settings.header}">
-            <h2 class="aigelb-chatbot-title">{settings.header}</h2>
-        </f:if>
-
-        <f:if condition="{settings.subheader}">
-            <h3 class="aigelb-chatbot-subtitle">{settings.subheader}</h3>
-        </f:if>
-
-        <f:if condition="{settings.bodytext}">
-            <div class="aigelb-chatbot-description">
-                <f:format.html>{settings.bodytext}</f:format.html>
-            </div>
-        </f:if>
-    </div>
-
-
-
-    <!-- Conversation History -->
-    <f:if condition="{conversationMessages}">
-        <h3 class="aigelb-history-title">Conversation:</h3>
-        <div class="container">
-            <f:for each="{conversationMessages}" as="message">
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="aigelb-message-header">
-                            <f:if condition="{message.role} == 'user'">
-                                <strong>You:</strong>
-                            </f:if>
-                            <f:if condition="{message.role} == 'assistant'">
-                                <strong>AI Assistant:</strong>
-                            </f:if>
-                            <span class="aigelb-message-time">
-                                <f:format.date format="d.m.Y H:i">{message.date_created}</f:format.date>
-                            </span>
-                        </div>
-                        <div class="aigelb-message-content">
-                            {message.content -> aigelb:format.markdown()}
-                        </div>
-                    </div>
-                </div>
-            </f:for>
-        </div>
-    </f:if>
-
-    <!-- Current AI Response -->
-    <f:if condition="{hasResponse}">
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="aigelb-current-response">
-                        <div class="aigelb-message-header">
-                            <strong>You:</strong>
-                        </div>
-                        <div class="aigelb-message-content aigelb-user-message">
-                            <f:format.nl2br>{userInput}</f:format.nl2br>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="aigelb-current-response">
-                        <div class="aigelb-message-header">
-                            <strong>AI Assistant:</strong>
-                        </div>
-                        <div class="aigelb-message-content aigelb-ai-message">
-                           {aiResponse -> aigelb:format.markdown()}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </f:if>
-
-    <!-- Main Chat Form -->
-    <div class="container">
-        <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form">
-            <!-- Hidden conversation ID for session tracking -->
-            <f:if condition="{conversationId}">
-                <f:form.hidden name="conversationId" value="{conversationId}" />
-            </f:if>
-
-            <div class="row mb-3">
-                <div class="col-10">
-                    <f:form.textfield
-                        name="userinput"
-                        value=""
-                        placeholder="{f:if(condition: settings.header, then: 'Ask {settings.header}...', else: 'Ask me anything...')}"
-                        class="form-control"
-                        required="required"
-                        maxlength="1000"
-                    />
-                </div>
-                <div class="col-2">
-                    <f:form.submit
-                        value="Send"
-                        class="btn btn-primary w-100"
-                    />
-                </div>
-            </div>
-        </f:form>
-    </div>
-
-    <!-- New Conversation Button -->
-    <div class="container mt-4">
+<div class="aigelb-chatbot-wrapper">
+    <div class="container-fluid">
         <div class="row">
-            <div class="col-12 text-center">
-                <f:link.action
-                    action="chatbot"
-                    controller="AIChatbot"
-                    arguments="{newConversation: 1}"
-                    class="btn btn-outline-secondary"
-                >
-                    <i class="fas fa-plus"></i> Start New Conversation
-                </f:link.action>
-            </div>
-        </div>
-    </div>
-
-    <!-- Predefined Questions (Agent-specific) -->
-    <f:if condition="{questions}">
-        <div class="container mb-4">
-            <div class="row">
-                <div class="col-12">
-                    <h4>Quick Questions:</h4>
-                    <div class="d-flex flex-wrap gap-2">
-                        <f:for each="{questions}" as="question">
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary btn-sm quick-question-btn"
-                                onclick="document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').value = '{question.question -> f:format.htmlspecialchars()}'; document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').focus();"
-                            >
-                                {question.question}
-                            </button>
-                        </f:for>
+            <!-- Conversation History Sidebar -->
+            <div class="col-lg-3 col-md-4 d-none d-md-block">
+                <div class="aigelb-conversation-sidebar">
+                    <div class="sidebar-header">
+                        <h5 class="mb-3">
+                            <i class="fas fa-history"></i> Conversation History
+                        </h5>
+                        <f:link.action
+                            action="chatbot"
+                            controller="AIChatbot"
+                            arguments="{newConversation: 1}"
+                            class="btn btn-primary btn-sm w-100 mb-3"
+                        >
+                            <i class="fas fa-plus"></i> New Conversation
+                        </f:link.action>
                     </div>
+
+                    <f:if condition="{conversationHistory}">
+                        <div class="conversation-list">
+                            <f:for each="{conversationHistory}" as="conversation">
+                                <div class="conversation-item {f:if(condition: '{conversation.id} == {currentConversationId}', then: 'active')}">
+                                    <f:link.action
+                                        action="chatbot"
+                                        controller="AIChatbot"
+                                        arguments="{selectConversation: conversation.id}"
+                                        class="conversation-link"
+                                    >
+                                        <div class="conversation-title">
+                                            {conversation.title}
+                                        </div>
+                                        <div class="conversation-meta">
+                                            <small class="text-muted">
+                                                <f:format.date format="d.m.Y H:i">{conversation.lastActivity}</f:format.date>
+                                                · {conversation.messageCount} messages
+                                            </small>
+                                        </div>
+                                        <f:if condition="{conversation.lastMessage}">
+                                            <div class="conversation-preview">
+                                                <small class="text-muted">
+                                                    {conversation.lastMessage}
+                                                </small>
+                                            </div>
+                                        </f:if>
+                                    </f:link.action>
+
+                                    <!-- Delete Button -->
+                                    <f:if condition="{conversation.id} != {currentConversationId}">
+                                        <f:link.action
+                                            action="chatbot"
+                                            controller="AIChatbot"
+                                            arguments="{deleteConversation: conversation.id}"
+                                            class="btn btn-outline-danger btn-sm conversation-delete"
+                                            onclick="return confirm('Are you sure you want to delete this conversation?');"
+                                        >
+                                            <i class="fas fa-trash-alt"></i>
+                                        </f:link.action>
+                                    </f:if>
+                                </div>
+                            </f:for>
+                        </div>
+                    </f:if>
+
+                    <f:if condition="{conversationHistory} == ''">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-comments fa-2x mb-2"></i>
+                            <p>No conversations yet.<br>Start your first conversation!</p>
+                        </div>
+                    </f:if>
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="col-lg-9 col-md-8">
+                <div class="aigelb-chatbot-container">
+                    <!-- Error Messages -->
+                    <f:if condition="{hasError}">
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Error:</strong> {errorMessage}
+                        </div>
+                    </f:if>
+
+                    <!-- Header with FlexForm settings -->
+                    <div class="aigelb-chatbot-header">
+                        <f:if condition="{settings.header}">
+                            <h2 class="aigelb-chatbot-title">{settings.header}</h2>
+                        </f:if>
+
+                        <f:if condition="{settings.subheader}">
+                            <h3 class="aigelb-chatbot-subtitle">{settings.subheader}</h3>
+                        </f:if>
+
+                        <f:if condition="{settings.bodytext}">
+                            <div class="aigelb-chatbot-description">
+                                <f:format.html>{settings.bodytext}</f:format.html>
+                            </div>
+                        </f:if>
+                    </div>
+
+                    <!-- Mobile Conversation History Toggle -->
+                    <div class="d-md-none mb-3">
+                        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#mobileConversationHistory">
+                            <i class="fas fa-history"></i> View Conversation History
+                        </button>
+                        <div class="collapse mt-2" id="mobileConversationHistory">
+                            <div class="card card-body">
+                                <f:if condition="{conversationHistory}">
+                                    <f:for each="{conversationHistory}" as="conversation">
+                                        <div class="mb-2">
+                                            <f:link.action
+                                                action="chatbot"
+                                                controller="AIChatbot"
+                                                arguments="{selectConversation: conversation.id}"
+                                                class="btn btn-sm {f:if(condition: '{conversation.id} == {currentConversationId}', then: 'btn-primary', else: 'btn-outline-primary')} w-100 text-start"
+                                            >
+                                                <div>{conversation.title}</div>
+                                                <small><f:format.date format="d.m.Y H:i">{conversation.lastActivity}</f:format.date></small>
+                                            </f:link.action>
+                                        </div>
+                                    </f:for>
+                                </f:if>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conversation Messages -->
+                    <div class="chat-messages">
+                        <f:if condition="{conversationMessages}">
+                            <div class="conversation-messages">
+                                <f:for each="{conversationMessages}" as="message">
+                                    <div class="message-wrapper">
+                                        <div class="message {f:if(condition: '{message.role} == \'user\'', then: 'user-message', else: 'ai-message')}">
+                                            <div class="message-header">
+                                                <strong>
+                                                    <f:if condition="{message.role} == 'user'">
+                                                        <i class="fas fa-user"></i> You
+                                                    </f:if>
+                                                    <f:if condition="{message.role} == 'assistant'">
+                                                        <i class="fas fa-robot"></i> AI Assistant
+                                                    </f:if>
+                                                </strong>
+                                                <span class="message-time">
+                                                    <f:format.date format="d.m.Y H:i">{message.date_created}</f:format.date>
+                                                </span>
+                                            </div>
+                                            <div class="message-content">
+                                                {message.content -> aigelb:format.markdown()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </f:for>
+                            </div>
+                        </f:if>
+
+                        <!-- Current AI Response -->
+                        <f:if condition="{hasResponse}">
+                            <div class="current-response">
+                                <div class="message-wrapper">
+                                    <div class="message user-message">
+                                        <div class="message-header">
+                                            <strong><i class="fas fa-user"></i> You</strong>
+                                        </div>
+                                        <div class="message-content">
+                                            <f:format.nl2br>{userInput}</f:format.nl2br>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="message-wrapper">
+                                    <div class="message ai-message">
+                                        <div class="message-header">
+                                            <strong><i class="fas fa-robot"></i> AI Assistant</strong>
+                                        </div>
+                                        <div class="message-content">
+                                            {aiResponse -> aigelb:format.markdown()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </f:if>
+                    </div>
+
+                    <!-- Main Chat Form -->
+                    <div class="chat-input-section">
+                        <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form">
+                            <!-- Hidden conversation ID for session tracking -->
+                            <f:if condition="{conversationId}">
+                                <f:form.hidden name="conversationId" value="{conversationId}" />
+                            </f:if>
+
+                            <div class="input-group">
+                                <f:form.textfield
+                                    name="userinput"
+                                    value=""
+                                    placeholder="{f:if(condition: settings.header, then: 'Ask {settings.header}...', else: 'Ask me anything...')}"
+                                    class="form-control"
+                                    required="required"
+                                    maxlength="1000"
+                                />
+                                <f:form.submit
+                                    value="Send"
+                                    class="btn btn-primary"
+                                />
+                            </div>
+                        </f:form>
+                    </div>
+
+                    <!-- Predefined Questions (Agent-specific) -->
+                    <f:if condition="{questions}">
+                        <div class="quick-questions mt-3">
+                            <h6>Quick Questions:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                <f:for each="{questions}" as="question">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        onclick="document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').value = '{question.question -> f:format.htmlspecialchars()}'; document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').focus();"
+                                    >
+                                        {question.question}
+                                    </button>
+                                </f:for>
+                            </div>
+                        </div>
+                    </f:if>
                 </div>
             </div>
         </div>
-    </f:if>
-
+    </div>
 </div>
 
 </html>
