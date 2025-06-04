@@ -2,7 +2,7 @@
       xmlns:aigelb="http://typo3.org/ns/IGelb/Aigelb/ViewHelpers"
       data-namespace-typo3-fluid="true">
 
-<div class="aigelb-chatbot-wrapper">
+<div class="aigelb-chatbot-wrapper" data-chatbot-instance="{chatbotInstanceId}" data-agent-id="{selectedAgentId}">
     <div class="container-fluid">
         <div class="row">
             <!-- Conversation History Sidebar -->
@@ -15,7 +15,7 @@
                         <f:link.action
                             action="chatbot"
                             controller="AIChatbot"
-                            arguments="{newConversation: 1}"
+                            arguments="{newConversation: 1, chatbotInstanceId: chatbotInstanceId, contentElementUid: contentElementUid}"
                             class="btn btn-primary btn-sm w-100 mb-3"
                         >
                             <i class="fas fa-plus"></i> New Conversation
@@ -29,7 +29,7 @@
                                     <f:link.action
                                         action="chatbot"
                                         controller="AIChatbot"
-                                        arguments="{selectConversation: conversation.id}"
+                                        arguments="{selectConversation: conversation.id, chatbotInstanceId: chatbotInstanceId, contentElementUid: contentElementUid}"
                                         class="conversation-link"
                                     >
                                         <div class="conversation-title">
@@ -55,7 +55,7 @@
                                         <f:link.action
                                             action="chatbot"
                                             controller="AIChatbot"
-                                            arguments="{deleteConversation: conversation.id}"
+                                            arguments="{deleteConversation: conversation.id, chatbotInstanceId: chatbotInstanceId, contentElementUid: contentElementUid}"
                                             class="btn btn-outline-danger btn-sm conversation-delete"
                                             onclick="return confirm('Are you sure you want to delete this conversation?');"
                                         >
@@ -101,14 +101,21 @@
                                 <f:format.html>{settings.bodytext}</f:format.html>
                             </div>
                         </f:if>
+
+                        <!-- Debug Info (only if in development mode) -->
+                        <f:if condition="{contentElementUid}">
+                            <small class="text-muted d-block mt-2">
+                                Instance: {chatbotInstanceId} | Agent: {selectedAgentId} | CE: {contentElementUid}
+                            </small>
+                        </f:if>
                     </div>
 
                     <!-- Mobile Conversation History Toggle -->
                     <div class="d-md-none mb-3">
-                        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#mobileConversationHistory">
+                        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#mobileConversationHistory-{chatbotInstanceId}">
                             <i class="fas fa-history"></i> View Conversation History
                         </button>
-                        <div class="collapse mt-2" id="mobileConversationHistory">
+                        <div class="collapse mt-2" id="mobileConversationHistory-{chatbotInstanceId}">
                             <div class="card card-body">
                                 <f:if condition="{conversationHistory}">
                                     <f:for each="{conversationHistory}" as="conversation">
@@ -116,7 +123,7 @@
                                             <f:link.action
                                                 action="chatbot"
                                                 controller="AIChatbot"
-                                                arguments="{selectConversation: conversation.id}"
+                                                arguments="{selectConversation: conversation.id, chatbotInstanceId: chatbotInstanceId, contentElementUid: contentElementUid}"
                                                 class="btn btn-sm {f:if(condition: '{conversation.id} == {currentConversationId}', then: 'btn-primary', else: 'btn-outline-primary')} w-100 text-start"
                                             >
                                                 <div>{conversation.title}</div>
@@ -130,7 +137,7 @@
                     </div>
 
                     <!-- Conversation Messages -->
-                    <div class="chat-messages">
+                    <div class="chat-messages" id="chat-messages-{chatbotInstanceId}">
                         <f:if condition="{conversationMessages}">
                             <div class="conversation-messages">
                                 <f:for each="{conversationMessages}" as="message">
@@ -158,7 +165,7 @@
                             </div>
                         </f:if>
 
-                        <!-- Current AI Response -->
+                        <!-- Current AI Response (only shown for this specific instance) -->
                         <f:if condition="{hasResponse}">
                             <div class="current-response">
                                 <div class="message-wrapper">
@@ -187,10 +194,14 @@
 
                     <!-- Main Chat Form -->
                     <div class="chat-input-section">
-                        <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form">
-                            <!-- Hidden conversation ID for session tracking -->
+                        <f:form action="chatbot" controller="AIChatbot" method="post" class="aigelb-form" data-chatbot-form="{chatbotInstanceId}">
+                            <!-- Hidden fields for instance isolation -->
                             <f:if condition="{conversationId}">
                                 <f:form.hidden name="conversationId" value="{conversationId}" />
+                            </f:if>
+                            <f:form.hidden name="chatbotInstanceId" value="{chatbotInstanceId}" />
+                            <f:if condition="{contentElementUid}">
+                                <f:form.hidden name="contentElementUid" value="{contentElementUid}" />
                             </f:if>
 
                             <div class="input-group">
@@ -201,6 +212,7 @@
                                     class="form-control"
                                     required="required"
                                     maxlength="1000"
+                                    id="userinput-{chatbotInstanceId}"
                                 />
                                 <f:form.submit
                                     value="Send"
@@ -219,18 +231,64 @@
                                     <button
                                         type="button"
                                         class="btn btn-outline-primary btn-sm"
-                                        onclick="document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').value = '{question.question -> f:format.htmlspecialchars()}'; document.querySelector('input[name=\'tx_aigelb_aigelbchatbot[userinput]\']').focus();"
+                                        onclick="document.getElementById('userinput-{chatbotInstanceId}').value = '{question.question -> f:format.htmlspecialchars()}'; document.getElementById('userinput-{chatbotInstanceId}').focus();"
                                     >
                                         {question.question}
                                     </button>
                                 </f:for>
                             </div>
-                                        </div>
+                        </div>
                     </f:if>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Enhanced JavaScript for instance isolation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced form handling with instance isolation
+    const chatbotInstances = document.querySelectorAll('[data-chatbot-instance]');
+
+    chatbotInstances.forEach(function(chatbotWrapper) {
+        const instanceId = chatbotWrapper.getAttribute('data-chatbot-instance');
+        const agentId = chatbotWrapper.getAttribute('data-agent-id');
+        const form = chatbotWrapper.querySelector('[data-chatbot-form="' + instanceId + '"]');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Add visual feedback for the specific chatbot
+                const submitBtn = form.querySelector('input[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.value = 'Sending...';
+                    submitBtn.disabled = true;
+                }
+
+                // Auto-scroll to messages area for this specific chatbot
+                setTimeout(function() {
+                    const messagesArea = chatbotWrapper.querySelector('#chat-messages-' + instanceId);
+                    if (messagesArea) {
+                        messagesArea.scrollTop = messagesArea.scrollHeight;
+                    }
+                }, 100);
+            });
+        }
+
+        // Auto-scroll to bottom of messages on page load
+        const messagesArea = chatbotWrapper.querySelector('#chat-messages-' + instanceId);
+        if (messagesArea && messagesArea.scrollHeight > messagesArea.clientHeight) {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+    });
+
+    // Debug information (can be removed in production)
+    console.log('AI-Gelb Chatbot instances initialized:', chatbotInstances.length);
+    chatbotInstances.forEach(function(instance) {
+        console.log('Instance ID:', instance.getAttribute('data-chatbot-instance'),
+                    'Agent ID:', instance.getAttribute('data-agent-id'));
+    });
+});
+</script>
 
 </html>

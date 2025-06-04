@@ -13,8 +13,8 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 /**
  * AI Chatbot Controller
  *
- * Simplified controller that delegates conversation management
- * to the ConversationService for better separation of concerns.
+ * Enhanced controller with agent and content element isolation
+ * to support multiple chatbots on the same page.
  */
 final class AIChatbotController extends ActionController
 {
@@ -28,37 +28,100 @@ final class AIChatbotController extends ActionController
     ) {}
 
     /**
-     * Main chatbot action
+     * Main chatbot action with enhanced isolation
      */
     public function chatbotAction(): ResponseInterface
     {
+        // Get content element UID for isolation
+        $contentElementUid = $this->getContentElementUid();
+
         // Get agent configuration from FlexForm
         $selectedAgentId = $this->resolveSelectedAgent();
 
+        // Create unique identifier for this chatbot instance
+        $chatbotInstanceId = $this->generateChatbotInstanceId($selectedAgentId, $contentElementUid);
+
         // Handle special actions first
-        if ($redirectResponse = $this->handleSpecialActions($selectedAgentId)) {
+        if ($redirectResponse = $this->handleSpecialActions($selectedAgentId, $contentElementUid)) {
             return $redirectResponse;
         }
 
-        // Get current conversation
+        // Get current conversation with content element isolation
         $submittedConversationId = $this->request->hasArgument('conversationId')
             ? (string)$this->request->getArgument('conversationId')
             : null;
 
         $conversationId = $this->conversationService->getCurrentConversationId(
             $selectedAgentId,
-            $submittedConversationId
+            $submittedConversationId,
+            $contentElementUid
         );
 
         // Assign basic template variables
-        $this->assignBasicTemplateVariables($selectedAgentId, $conversationId);
+        $this->assignBasicTemplateVariables($selectedAgentId, $conversationId, $chatbotInstanceId, $contentElementUid);
 
-        // Process user input if submitted
-        if ($this->request->hasArgument('userinput')) {
+        // Process user input if submitted and it belongs to this instance
+        if ($this->shouldProcessUserInput($chatbotInstanceId)) {
             $this->processUserInput($selectedAgentId, $conversationId);
         }
 
         return $this->htmlResponse();
+    }
+
+    /**
+     * Get content element UID from request/context
+     */
+    private function getContentElementUid(): ?int
+    {
+        // Try to get from configurationManager
+        $contentObject = $this->configurationManager->getContentObject();
+        if ($contentObject !== null) {
+            $contentElementUid = (int)$contentObject->data['uid'];
+            if ($contentElementUid > 0) {
+                return $contentElementUid;
+            }
+        }
+
+        // Fallback: try to get from request if passed as hidden field
+        if ($this->request->hasArgument('contentElementUid')) {
+            $contentElementUid = (int)$this->request->getArgument('contentElementUid');
+            if ($contentElementUid > 0) {
+                return $contentElementUid;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate unique chatbot instance ID
+     */
+    private function generateChatbotInstanceId(string $agentId, ?int $contentElementUid): string
+    {
+        $components = [$agentId];
+
+        if ($contentElementUid !== null) {
+            $components[] = 'ce_' . $contentElementUid;
+        }
+
+        return md5(implode('_', $components));
+    }
+
+    /**
+     * Check if this request should be processed by this chatbot instance
+     */
+    private function shouldProcessUserInput(string $chatbotInstanceId): bool
+    {
+        if (!$this->request->hasArgument('userinput')) {
+            return false;
+        }
+
+        // Check if this request is for this specific chatbot instance
+        $submittedInstanceId = $this->request->hasArgument('chatbotInstanceId')
+            ? (string)$this->request->getArgument('chatbotInstanceId')
+            : '';
+
+        return $submittedInstanceId === $chatbotInstanceId;
     }
 
     /**
@@ -81,32 +144,58 @@ final class AIChatbotController extends ActionController
     /**
      * Handle special actions (new conversation, select conversation, delete)
      */
-    private function handleSpecialActions(string $selectedAgentId): ?ResponseInterface
+    private function handleSpecialActions(string $selectedAgentId, ?int $contentElementUid): ?ResponseInterface
     {
-        // Handle conversation selection
+        $chatbotInstanceId = $this->generateChatbotInstanceId($selectedAgentId, $contentElementUid);
+
+        // Handle conversation selection - only if it's for this specific instance
         if ($this->request->hasArgument('selectConversation')) {
-            $conversationId = (string)$this->request->getArgument('selectConversation');
-            $this->conversationService->selectConversation($selectedAgentId, $conversationId);
-            return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            $requestedInstanceId = $this->request->hasArgument('chatbotInstanceId')
+                ? (string)$this->request->getArgument('chatbotInstanceId')
+                : '';
+
+            if ($requestedInstanceId === $chatbotInstanceId) {
+                $conversationId = (string)$this->request->getArgument('selectConversation');
+                $this->conversationService->selectConversation($selectedAgentId, $conversationId, $contentElementUid);
+                return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            }
         }
 
-        // Handle new conversation request
+        // Handle new conversation request - only if it's for this specific instance
         if ($this->request->hasArgument('newConversation') && $this->request->getArgument('newConversation') === '1') {
-            $this->conversationService->createNewConversation($selectedAgentId);
-            return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            $requestedInstanceId = $this->request->hasArgument('chatbotInstanceId')
+                ? (string)$this->request->getArgument('chatbotInstanceId')
+                : '';
+
+            if ($requestedInstanceId === $chatbotInstanceId) {
+                $this->conversationService->createNewConversation($selectedAgentId, $contentElementUid);
+                return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            }
         }
 
-        // Handle delete conversation request
+        // Handle delete conversation request - only if it's for this specific instance
         if ($this->request->hasArgument('deleteConversation')) {
-            $conversationToDelete = (string)$this->request->getArgument('deleteConversation');
-            $this->conversationService->deleteConversation($selectedAgentId, $conversationToDelete);
-            return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            $requestedInstanceId = $this->request->hasArgument('chatbotInstanceId')
+                ? (string)$this->request->getArgument('chatbotInstanceId')
+                : '';
+
+            if ($requestedInstanceId === $chatbotInstanceId) {
+                $conversationToDelete = (string)$this->request->getArgument('deleteConversation');
+                $this->conversationService->deleteConversation($selectedAgentId, $conversationToDelete, $contentElementUid);
+                return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            }
         }
 
-        // Handle clear history request (debugging/maintenance)
+        // Handle clear history request (debugging/maintenance) - only if it's for this specific instance
         if ($this->request->hasArgument('clearHistory') && $this->request->getArgument('clearHistory') === 'confirm') {
-            $this->conversationService->clearConversationHistory($selectedAgentId);
-            return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            $requestedInstanceId = $this->request->hasArgument('chatbotInstanceId')
+                ? (string)$this->request->getArgument('chatbotInstanceId')
+                : '';
+
+            if ($requestedInstanceId === $chatbotInstanceId) {
+                $this->conversationService->clearConversationHistory($selectedAgentId, $contentElementUid);
+                return $this->redirectToUri($this->uriBuilder->uriFor('chatbot'));
+            }
         }
 
         return null;
@@ -115,8 +204,12 @@ final class AIChatbotController extends ActionController
     /**
      * Assign basic template variables
      */
-    private function assignBasicTemplateVariables(string $selectedAgentId, string $conversationId): void
-    {
+    private function assignBasicTemplateVariables(
+        string $selectedAgentId,
+        string $conversationId,
+        string $chatbotInstanceId,
+        ?int $contentElementUid
+    ): void {
         // FlexForm settings
         $this->view->assign('settings', $this->settings);
 
@@ -124,8 +217,10 @@ final class AIChatbotController extends ActionController
         $this->view->assign('conversationId', $conversationId);
         $this->view->assign('selectedAgentId', $selectedAgentId);
         $this->view->assign('currentConversationId', $conversationId);
+        $this->view->assign('chatbotInstanceId', $chatbotInstanceId);
+        $this->view->assign('contentElementUid', $contentElementUid);
 
-        // Conversation history for sidebar
+        // Conversation history for sidebar (agent-specific)
         $conversationHistory = $this->conversationService->getConversationHistory($selectedAgentId);
         $this->view->assign('conversationHistory', $conversationHistory);
 
@@ -133,7 +228,7 @@ final class AIChatbotController extends ActionController
         $conversationMessages = $this->conversationService->getConversationMessages($conversationId);
         $this->view->assign('conversationMessages', $conversationMessages);
 
-        // Load predefined questions
+        // Load predefined questions (agent-specific)
         $selectedAgentUid = (int)($this->settings['agent'] ?? 0);
         $questions = $this->aIGelbService->getPredefinedQuestions($selectedAgentUid);
         $this->view->assign('questions', $questions);

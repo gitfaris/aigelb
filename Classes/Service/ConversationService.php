@@ -33,13 +33,20 @@ final class ConversationService
 
     /**
      * Get current conversation ID for agent or create new one
+     *
+     * @param string $agentId The specific agent ID to ensure isolation
+     * @param string|null $submittedConversationId Optional conversation ID from form
+     * @param int|null $contentElementUid Optional content element UID for additional isolation
      */
-    public function getCurrentConversationId(string $agentId, ?string $submittedConversationId = null): string
-    {
+    public function getCurrentConversationId(
+        string $agentId,
+        ?string $submittedConversationId = null,
+        ?int $contentElementUid = null
+    ): string {
         $this->ensureSessionStarted();
-        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId, $contentElementUid);
 
-        // Use submitted conversation ID if valid
+        // Use submitted conversation ID if valid and belongs to this agent
         if (!empty($submittedConversationId) && $this->isConversationValidForAgent($submittedConversationId, $agentId)) {
             $_SESSION[$sessionKey] = $submittedConversationId;
             return $submittedConversationId;
@@ -54,37 +61,43 @@ final class ConversationService
         }
 
         // Create new conversation
-        return $this->createNewConversation($agentId);
+        return $this->createNewConversation($agentId, $contentElementUid);
     }
 
     /**
      * Select a specific conversation from history
      */
-    public function selectConversation(string $agentId, string $conversationId): bool
-    {
+    public function selectConversation(
+        string $agentId,
+        string $conversationId,
+        ?int $contentElementUid = null
+    ): bool {
         if (!$this->isValidConversationForAgent($conversationId, $agentId)) {
             return false;
         }
 
-        $this->setCurrentConversationId($agentId, $conversationId);
+        $this->setCurrentConversationId($agentId, $conversationId, $contentElementUid);
         return true;
     }
 
     /**
      * Create a new conversation for agent
      */
-    public function createNewConversation(string $agentId): string
+    public function createNewConversation(string $agentId, ?int $contentElementUid = null): string
     {
         $this->ensureSessionStarted();
 
         $conversationId = $this->aIGelbService->createConversation($agentId);
 
         if (empty($conversationId)) {
-            $this->logger->error('Failed to create new conversation', ['agentId' => $agentId]);
+            $this->logger->error('Failed to create new conversation', [
+                'agentId' => $agentId,
+                'contentElementUid' => $contentElementUid
+            ]);
             throw new \RuntimeException('Failed to create new conversation');
         }
 
-        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId, $contentElementUid);
         $_SESSION[$sessionKey] = $conversationId;
 
         // Initialize in history
@@ -92,7 +105,8 @@ final class ConversationService
 
         $this->logger->info('New conversation created', [
             'agentId' => $agentId,
-            'conversationId' => $conversationId
+            'conversationId' => $conversationId,
+            'contentElementUid' => $contentElementUid
         ]);
 
         return $conversationId;
@@ -101,8 +115,11 @@ final class ConversationService
     /**
      * Delete conversation from history
      */
-    public function deleteConversation(string $agentId, string $conversationId): bool
-    {
+    public function deleteConversation(
+        string $agentId,
+        string $conversationId,
+        ?int $contentElementUid = null
+    ): bool {
         $history = $this->getConversationHistory($agentId);
 
         if (!isset($history[$conversationId])) {
@@ -114,14 +131,15 @@ final class ConversationService
 
         // Clear from session if it's the current conversation
         $this->ensureSessionStarted();
-        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId, $contentElementUid);
         if (($_SESSION[$sessionKey] ?? '') === $conversationId) {
             unset($_SESSION[$sessionKey]);
         }
 
         $this->logger->info('Conversation deleted', [
             'agentId' => $agentId,
-            'conversationId' => $conversationId
+            'conversationId' => $conversationId,
+            'contentElementUid' => $contentElementUid
         ]);
 
         return true;
@@ -156,6 +174,7 @@ final class ConversationService
             'lastActivity' => time(),
             'firstMessage' => $firstMessage,
             'messageCount' => ($history[$conversationId]['messageCount'] ?? 0) + 1,
+            'agentId' => $agentId, // Store agent ID for validation
         ];
 
         // Limit number of stored conversations
@@ -192,12 +211,17 @@ final class ConversationService
             return [];
         }
 
+        // Filter conversations to ensure they belong to this agent
+        $agentConversations = array_filter($decodedData, function ($conversation) use ($agentId) {
+            return isset($conversation['agentId']) && $conversation['agentId'] === $agentId;
+        });
+
         // Sort by last activity (newest first)
-        uasort($decodedData, function ($a, $b) {
+        uasort($agentConversations, function ($a, $b) {
             return ($b['lastActivity'] ?? 0) <=> ($a['lastActivity'] ?? 0);
         });
 
-        return $decodedData;
+        return $agentConversations;
     }
 
     /**
@@ -217,7 +241,7 @@ final class ConversationService
     /**
      * Clear all conversation history for agent (maintenance function)
      */
-    public function clearConversationHistory(string $agentId): void
+    public function clearConversationHistory(string $agentId, ?int $contentElementUid = null): void
     {
         $cookieName = $this->getAgentSpecificCookieName($agentId);
 
@@ -230,10 +254,13 @@ final class ConversationService
 
         // Clear session
         $this->ensureSessionStarted();
-        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId, $contentElementUid);
         unset($_SESSION[$sessionKey]);
 
-        $this->logger->info('Conversation history cleared', ['agentId' => $agentId]);
+        $this->logger->info('Conversation history cleared', [
+            'agentId' => $agentId,
+            'contentElementUid' => $contentElementUid
+        ]);
     }
 
     /**
@@ -305,10 +332,13 @@ final class ConversationService
     /**
      * Set current conversation ID in session
      */
-    private function setCurrentConversationId(string $agentId, string $conversationId): void
-    {
+    private function setCurrentConversationId(
+        string $agentId,
+        string $conversationId,
+        ?int $contentElementUid = null
+    ): void {
         $this->ensureSessionStarted();
-        $sessionKey = $this->getAgentSpecificSessionKey($agentId);
+        $sessionKey = $this->getAgentSpecificSessionKey($agentId, $contentElementUid);
         $_SESSION[$sessionKey] = $conversationId;
     }
 
@@ -325,6 +355,7 @@ final class ConversationService
             'lastActivity' => time(),
             'firstMessage' => '',
             'messageCount' => 0,
+            'agentId' => $agentId, // Store agent ID for validation
         ];
 
         $this->saveConversationHistory($agentId, $history);
@@ -382,29 +413,45 @@ final class ConversationService
     }
 
     /**
-     * Generate agent-specific session key
+     * Generate agent-specific session key with optional content element isolation
      */
-    private function getAgentSpecificSessionKey(string $agentId): string
+    private function getAgentSpecificSessionKey(string $agentId, ?int $contentElementUid = null): string
     {
         $agentHash = substr(md5($agentId), 0, 8);
-        return self::SESSION_KEY_CONVERSATION_ID . '_agent_' . $agentHash;
+        $baseKey = self::SESSION_KEY_CONVERSATION_ID . '_agent_' . $agentHash;
+
+        // Add content element UID for additional isolation if provided
+        if ($contentElementUid !== null) {
+            $baseKey .= '_ce_' . $contentElementUid;
+        }
+
+        return $baseKey;
     }
 
     /**
-     * Validate if conversation ID exists in agent's history
+     * Validate if conversation ID exists in agent's history and belongs to the agent
      */
     private function isValidConversationForAgent(string $conversationId, string $agentId): bool
     {
         $history = $this->getConversationHistory($agentId);
-        return isset($history[$conversationId]);
+        $conversation = $history[$conversationId] ?? null;
+
+        return $conversation !== null &&
+               isset($conversation['agentId']) &&
+               $conversation['agentId'] === $agentId;
     }
 
     /**
-     * Basic validation for conversation and agent IDs
+     * Basic validation for conversation and agent IDs with agent-specific check
      */
     private function isConversationValidForAgent(string $conversationId, string $agentId): bool
     {
-        return !empty($conversationId) && !empty($agentId);
+        if (empty($conversationId) || empty($agentId)) {
+            return false;
+        }
+
+        // Additional validation: check if conversation belongs to this agent
+        return $this->isValidConversationForAgent($conversationId, $agentId);
     }
 
     /**
