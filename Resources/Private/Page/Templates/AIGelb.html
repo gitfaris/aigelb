@@ -1,0 +1,15 @@
+<nav class="aigelb-navigation">
+    <ul>
+        <f:for each="{aigelb_navigation}" as="page">
+            <li class="{f:if(condition: page.active, then: 'active')}">
+                <f:link.page pageUid="{page.data.uid}" title="{page.title}">
+                    {page.title}
+                </f:link.page>
+            </li>
+        </f:for>
+    </ul>
+</nav>
+
+<f:cObject data="{colPos: '0'}" typoscriptObjectPath="lib.dynamicContent" />
+
+

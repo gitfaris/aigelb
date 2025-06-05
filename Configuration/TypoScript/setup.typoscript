@@ -52,5 +52,32 @@ lib.tx_aigelb.contentElementRendering {
     page.10.templateName >
     page.10.templateName = AIGelb
 
+    # SEO: AI-Gelb Seiten von Suchmaschinen ausschließen
+    page.meta.robots >
+    page.meta.robots = noindex,nofollow
+
+    # AI-Gelb Navigation via MenuProcessor
+    page.10.dataProcessing {
+        5645 = TYPO3\CMS\Frontend\DataProcessing\MenuProcessor
+        5645 {
+            # Explizite UIDs der AI-Gelb Seiten verwenden
+            special = list
+            special.value = {$plugin.tx_aigelb.settings.aigelb_page_uids}
+
+            # Zusätzliche Einstellungen
+            levels = 1
+            expandAll = 0
+            includeSpacer = 0
+            includeNotInMenu = 1
+
+            # Titel-Feld für Navigation
+            titleField = nav_title // title
+
+            # Datenfeld-Name für das Template
+            as = aigelb_navigation
+
+        }
+    }
+
 
 [END]
