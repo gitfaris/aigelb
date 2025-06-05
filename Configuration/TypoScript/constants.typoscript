@@ -28,6 +28,28 @@ plugin.tx_aigelb {
   jsFile = EXT:aigelb/Resources/Public/JavaScript/Chatbot.js
 }
 
+# ==================================================
+# CONSTANTS - AI-Gelb Template Override Configuration
+# ==================================================
+
+plugin.tx_aigelb.settings {
+    # cat=plugin.tx_aigelb/basic; type=string; label=Page UIDs (comma-separated): All pages will use AI-Gelb template paths
+    aigelb_page_uids = 0
+
+    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Template Root Path
+    page_templateRootPath = EXT:aigelb/Resources/Private/Page/Templates/
+
+    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Partial Root Path
+    page_partialRootPath = EXT:aigelb/Resources/Private/Page/Partials/
+
+    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Layout Root Path
+    page_layoutRootPath = EXT:aigelb/Resources/Private/Page/Layouts/
+
+    # cat=plugin.tx_aigelb/enable; type=boolean; label=Enable AI-Gelb Template Override
+    enable_template_override = 1
+}
+
+
 # Backend module settings
 module.tx_aigelb {
   # cat=module.tx_aigelb/file; type=string; label=Path to backend template root

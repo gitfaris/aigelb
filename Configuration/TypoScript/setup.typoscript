@@ -40,3 +40,17 @@ lib.tx_aigelb.contentElementRendering {
     }
   }
 }
+
+# Check if template override is enabled and apply AI-Gelb paths
+[{$plugin.tx_aigelb.settings.enable_template_override} == 1 && traverse(page, "uid") in [{$plugin.tx_aigelb.settings.aigelb_page_uids}]]
+    # Override template paths
+    page.10.templateRootPaths.0 = {$plugin.tx_aigelb.settings.page_templateRootPath}
+    page.10.partialRootPaths.0 = {$plugin.tx_aigelb.settings.page_partialRootPath}
+    page.10.layoutRootPaths.0 = {$plugin.tx_aigelb.settings.page_layoutRootPath}
+
+    # template name based on pagelayout
+    page.10.templateName >
+    page.10.templateName = AIGelb
+
+
+[END]
