@@ -203,3 +203,16 @@ lib.tx_aigelb.contentElementRendering {
         }
     }
 [END]
+
+# ==================================================
+# 5. IFRAME CONFIGURATION
+# ==================================================
+# Configuration for iframe integration of AI-Gelb chatbot
+# This allows embedding the chatbot in an iframe on specified pages
+
+[{$plugin.tx_aigelb.iframe_page_id} > 0]
+    # Iframe configuration for AI-Gelb chatbot
+    page.10.settings {
+        iframePageId = {$plugin.tx_aigelb.iframe_page_id}
+    }
+[END]

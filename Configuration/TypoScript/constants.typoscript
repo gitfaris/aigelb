@@ -51,6 +51,14 @@ plugin.tx_aigelb {
 
     # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to JavaScript file
     jsFile = EXT:aigelb/Resources/Public/JavaScript/Chatbot.js
+
+    # --------------------------------------------------
+    # Iframe Configuration
+    # --------------------------------------------------
+    # Configuration for iframe integration
+
+    # cat=plugin.tx_aigelb/basic; type=int+; label=Iframe: Page ID for iframe source (enter page UID)
+    iframe_page_id = 0
 }
 
 # ==================================================
