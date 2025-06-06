@@ -1,57 +1,120 @@
-# AI-Gelb Extension Constants
-# These constants can be overridden in the TYPO3 backend via Template module
+# ==================================================
+# AI-GELB EXTENSION CONSTANTS
+# ==================================================
+# This file contains all configurable constants for the AI-Gelb extension.
+# These constants can be overridden in the TYPO3 backend via the Template module.
+#
+# Structure:
+# 1. Frontend Plugin Configuration
+# 2. Template Override Configuration
+# 3. Backend Module Configuration
+# ==================================================
+
+# ==================================================
+# 1. FRONTEND PLUGIN CONFIGURATION
+# ==================================================
+# Configuration for the AI-Gelb chatbot frontend plugin
 
 plugin.tx_aigelb {
-  # Path settings
-  view {
-    # cat=plugin.tx_aigelb/file; type=string; label=Path to template root (FE)
-    templateRootPath = EXT:aigelb/Resources/Private/Frontend/Templates/
 
-    # cat=plugin.tx_aigelb/file; type=string; label=Path to template partials (FE)
-    partialRootPath = EXT:aigelb/Resources/Private/Frontend/Partials/
+    # --------------------------------------------------
+    # Template View Configuration
+    # --------------------------------------------------
+    # Define paths for frontend templates, partials, and layouts
 
-    # cat=plugin.tx_aigelb/file; type=string; label=Path to template layouts (FE)
-    layoutRootPath = EXT:aigelb/Resources/Private/Frontend/Layouts/
-  }
+    view {
+        # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to template root (Frontend)
+        templateRootPath = EXT:aigelb/Resources/Private/Frontend/Templates/
 
-  # CSS and JS settings
-  # cat=plugin.tx_aigelb/enable; type=boolean; label=Include Chatbot CSS
-  includeCSS = 1
+        # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to template partials (Frontend)
+        partialRootPath = EXT:aigelb/Resources/Private/Frontend/Partials/
 
-  # cat=plugin.tx_aigelb/enable; type=boolean; label=Include Chatbot JS
-  includeJS = 1
+        # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to template layouts (Frontend)
+        layoutRootPath = EXT:aigelb/Resources/Private/Frontend/Layouts/
+    }
 
-  # cat=plugin.tx_aigelb/file; type=string; label=Path to CSS file
-  cssFile = EXT:aigelb/Resources/Public/Css/Chatbot.css
+    # --------------------------------------------------
+    # Asset Configuration (CSS/JS)
+    # --------------------------------------------------
+    # Control inclusion and paths for chatbot stylesheets and JavaScript files
 
-  # cat=plugin.tx_aigelb/file; type=string; label=Path to JS file
-  jsFile = EXT:aigelb/Resources/Public/JavaScript/Chatbot.js
+    # Enable/disable automatic inclusion of chatbot assets
+    # cat=plugin.tx_aigelb/enable; type=boolean; label=AI-Gelb Chatbot: Include chatbot CSS automatically
+    includeCSS = 1
+
+    # cat=plugin.tx_aigelb/enable; type=boolean; label=AI-Gelb Chatbot: Include chatbot JavaScript automatically
+    includeJS = 1
+
+    # Asset file paths
+    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to CSS file
+    cssFile = EXT:aigelb/Resources/Public/Css/Chatbot.css
+
+    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Chatbot: Path to JavaScript file
+    jsFile = EXT:aigelb/Resources/Public/JavaScript/Chatbot.js
 }
 
 # ==================================================
-# CONSTANTS - AI-Gelb Template Override Configuration
+# 2. TEMPLATE OVERRIDE CONFIGURATION
 # ==================================================
+# Configuration for overriding page templates with AI-Gelb templates
+# This allows specific pages to use custom AI-Gelb templates instead of default ones
 
 plugin.tx_aigelb.settings {
-    # cat=plugin.tx_aigelb/basic; type=string; label=Page UIDs (comma-separated): All pages will use AI-Gelb template paths
+
+    # --------------------------------------------------
+    # Page Selection Configuration
+    # --------------------------------------------------
+    # Define which pages should use AI-Gelb template overrides
+
+    # cat=plugin.tx_aigelb/basic; type=string; label=Template Override: Page UIDs (comma-separated list of pages to override)
     aigelb_page_uids = 0
 
-    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Template Root Path
+    # --------------------------------------------------
+    # Template Override Enable/Disable
+    # --------------------------------------------------
+    # Master switch for template override functionality
+
+    # cat=plugin.tx_aigelb/enable; type=boolean; label=Template Override: Enable AI-Gelb template override system
+    enable_template_override = 1
+
+    # --------------------------------------------------
+    # Template Override Paths
+    # --------------------------------------------------
+    # Define paths for page template overrides
+
+    # cat=plugin.tx_aigelb/file; type=string; label=Template Override: Template root path
     page_templateRootPath = EXT:aigelb/Resources/Private/Page/Templates/
 
-    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Partial Root Path
+    # cat=plugin.tx_aigelb/file; type=string; label=Template Override: Partial root path
     page_partialRootPath = EXT:aigelb/Resources/Private/Page/Partials/
 
-    # cat=plugin.tx_aigelb/file; type=string; label=AI-Gelb Layout Root Path
+    # cat=plugin.tx_aigelb/file; type=string; label=Template Override: Layout root path
     page_layoutRootPath = EXT:aigelb/Resources/Private/Page/Layouts/
 
-    # cat=plugin.tx_aigelb/enable; type=boolean; label=Enable AI-Gelb Template Override
-    enable_template_override = 1
+    # --------------------------------------------------
+    # Template Override Assets
+    # --------------------------------------------------
+    # CSS and JavaScript files specific to template overrides
+
+    # cat=plugin.tx_aigelb/file; type=string; label=Template Override: CSS file path
+    includeTemplateCSS = EXT:aigelb/Resources/Public/Css/Template.css
+
+    # cat=plugin.tx_aigelb/file; type=string; label=Template Override: JavaScript file path
+    includeTemplateJS = EXT:aigelb/Resources/Public/JavaScript/Template.js
 }
 
+# ==================================================
+# 3. BACKEND MODULE CONFIGURATION
+# ==================================================
+# Configuration for the AI-Gelb backend module in TYPO3 admin interface
 
-# Backend module settings
 module.tx_aigelb {
-  # cat=module.tx_aigelb/file; type=string; label=Path to backend template root
-  templateRootPath = EXT:aigelb/Resources/Private/Templates/Backend/
+
+    # --------------------------------------------------
+    # Backend Template Configuration
+    # --------------------------------------------------
+    # Define paths for backend module templates
+
+    # cat=module.tx_aigelb/file; type=string; label=Backend Module: Path to backend template root
+    templateRootPath = EXT:aigelb/Resources/Private/Templates/Backend/
 }

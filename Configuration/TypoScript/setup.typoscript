@@ -1,83 +1,205 @@
+# ==================================================
+# AI-GELB EXTENSION SETUP CONFIGURATION
+# ==================================================
+# This file contains the main TypoScript setup for the AI-Gelb extension.
+# It handles plugin configuration, template overrides, and asset inclusion.
+#
+# Structure:
+# 1. Plugin Configuration
+# 2. Content Element Rendering
+# 3. Template Override System
+# 4. Conditional Asset Inclusion
+# ==================================================
+
+# ==================================================
+# 1. PLUGIN CONFIGURATION
+# ==================================================
+# Basic configuration for the AI-Gelb plugin including MVC settings and view paths
+
 plugin.tx_aigelb {
-  view {
-    templateRootPaths.0 = {$plugin.tx_aigelb.view.templateRootPath}
-    partialRootPaths.0 = {$plugin.tx_aigelb.view.partialRootPath}
-    layoutRootPaths.0 = {$plugin.tx_aigelb.view.layoutRootPath}
-  }
 
-  mvc {
-    callDefaultActionIfActionCantBeResolved = 1
-  }
+    # --------------------------------------------------
+    # View Configuration
+    # --------------------------------------------------
+    # Set up template, partial, and layout paths for the plugin
 
+    view {
+        templateRootPaths.0 = {$plugin.tx_aigelb.view.templateRootPath}
+        partialRootPaths.0 = {$plugin.tx_aigelb.view.partialRootPath}
+        layoutRootPaths.0 = {$plugin.tx_aigelb.view.layoutRootPath}
+    }
+
+    # --------------------------------------------------
+    # MVC Configuration
+    # --------------------------------------------------
+    # Configure Model-View-Controller behavior
+
+    mvc {
+        # Fall back to default action if requested action cannot be resolved
+        callDefaultActionIfActionCantBeResolved = 1
+    }
 }
 
-# Rendering of content elements
+# ==================================================
+# 2. CONTENT ELEMENT RENDERING
+# ==================================================
+# Configuration for rendering content elements within AI-Gelb templates
+
+# Library object for rendering content elements
 lib.tx_aigelb.contentElementRendering = RECORDS
 lib.tx_aigelb.contentElementRendering {
-  tables = tt_content
-  source.current = 1
-  dontCheckPid = 1
+    # Target table for content elements
+    tables = tt_content
+
+    # Use current record as source
+    source.current = 1
+
+    # Skip PID checking for flexible content rendering
+    dontCheckPid = 1
 }
 
-# Include CSS for AI-Gelb Chatbot (conditional on constant)
-[{$plugin.tx_aigelb.includeCSS} == 1]
-  page.includeCSS {
-    aigelb_chatbot = {$plugin.tx_aigelb.cssFile}
-    aigelb_chatbot {
-      media = all
-      forceOnTop = 0
-      title = AI-Gelb Chatbot Styles
-    }
-  }
+# ==================================================
+# 3. TEMPLATE OVERRIDE SYSTEM
+# ==================================================
+# Conditional template override for specific pages using AI-Gelb templates
+# This system replaces the default page template with AI-Gelb custom templates
+# when enabled and applied to specified page UIDs
 
-# Include JS for AI-Gelb Chatbot (conditional on constant)
-[{$plugin.tx_aigelb.includeJS} == 1]
-  page.includeJSFooter {
-    aigelb_chatbot = {$plugin.tx_aigelb.jsFile}
-    aigelb_chatbot {
-      forceOnTop = 0
-      title = AI-Gelb Chatbot Scripts
-    }
-  }
-}
-
-# Check if template override is enabled and apply AI-Gelb paths
 [{$plugin.tx_aigelb.settings.enable_template_override} == 1 && traverse(page, "uid") in [{$plugin.tx_aigelb.settings.aigelb_page_uids}]]
-    # Override template paths
-    page.10.templateRootPaths.0 = {$plugin.tx_aigelb.settings.page_templateRootPath}
-    page.10.partialRootPaths.0 = {$plugin.tx_aigelb.settings.page_partialRootPath}
-    page.10.layoutRootPaths.0 = {$plugin.tx_aigelb.settings.page_layoutRootPath}
 
-    # template name based on pagelayout
-    page.10.templateName >
-    page.10.templateName = AIGelb
+    # --------------------------------------------------
+    # Page Template Override
+    # --------------------------------------------------
+    # Replace default page object with AI-Gelb custom template
 
-    # SEO: AI-Gelb Seiten von Suchmaschinen ausschließen
-    page.meta.robots >
-    page.meta.robots = noindex,nofollow
+    # Clear existing page configuration
+    page >
 
-    # AI-Gelb Navigation via MenuProcessor
-    page.10.dataProcessing {
-        5645 = TYPO3\CMS\Frontend\DataProcessing\MenuProcessor
-        5645 {
-            # Explizite UIDs der AI-Gelb Seiten verwenden
-            special = list
-            special.value = {$plugin.tx_aigelb.settings.aigelb_page_uids}
+    # Create new page object with AI-Gelb template
+    page = PAGE
+    page {
+        typeNum = 0
 
-            # Zusätzliche Einstellungen
-            levels = 1
-            expandAll = 0
-            includeSpacer = 0
-            includeNotInMenu = 1
+        # --------------------------------------------------
+        # Fluid Template Configuration
+        # --------------------------------------------------
+        # Configure Fluid template engine with AI-Gelb paths
 
-            # Titel-Feld für Navigation
-            titleField = nav_title // title
+        10 = FLUIDTEMPLATE
+        10 {
+            # Template paths (using AI-Gelb override paths)
+            templateRootPaths.0 = {$plugin.tx_aigelb.settings.page_templateRootPath}
+            partialRootPaths.0 = {$plugin.tx_aigelb.settings.page_partialRootPath}
+            layoutRootPaths.0 = {$plugin.tx_aigelb.settings.page_layoutRootPath}
 
-            # Datenfeld-Name für das Template
-            as = aigelb_navigation
+            # Use AI-Gelb template
+            templateName = AIGelb
 
+            # --------------------------------------------------
+            # Data Processing Configuration
+            # --------------------------------------------------
+            # Process navigation data for AI-Gelb pages
+
+            dataProcessing {
+                # Menu processor for AI-Gelb navigation
+                5645 = TYPO3\CMS\Frontend\DataProcessing\MenuProcessor
+                5645 {
+                    # Use explicit list of AI-Gelb page UIDs
+                    special = list
+                    special.value = {$plugin.tx_aigelb.settings.aigelb_page_uids}
+
+                    # Navigation configuration
+                    levels = 1
+                    expandAll = 0
+                    includeSpacer = 0
+                    includeNotInMenu = 1
+
+                    # Use navigation title if available, fallback to page title
+                    titleField = nav_title // title
+
+                    # Variable name for template access
+                    as = aigelb_navigation
+                }
+            }
+        }
+
+        # --------------------------------------------------
+        # Meta Tags Configuration
+        # --------------------------------------------------
+        # Configure meta tags for AI-Gelb pages
+
+        # Prevent search engine indexing
+        meta.robots = noindex,nofollow
+
+        # Responsive viewport configuration
+        meta.viewport = width=device-width, initial-scale=1
+
+        # Page description for AI-Gelb pages
+        meta.description = TEXT
+        meta.description = AI-Gelb Chatbot - Your AI Assistant
+
+        # --------------------------------------------------
+        # Template-Specific CSS Inclusion
+        # --------------------------------------------------
+        # Include CSS specific to AI-Gelb template overrides
+
+        includeCSS {
+            template = {$plugin.tx_aigelb.settings.includeTemplateCSS}
+            template {
+                media = all
+                forceOnTop = 0
+                title = AI-Gelb Template Styles
+            }
+        }
+
+        # --------------------------------------------------
+        # Template-Specific JavaScript Inclusion
+        # --------------------------------------------------
+        # Include JavaScript specific to AI-Gelb template overrides
+
+        includeJSFooter {
+            template = {$plugin.tx_aigelb.settings.includeTemplateJS}
+            template {
+                forceOnTop = 0
+                title = AI-Gelb Template Scripts
+            }
         }
     }
 
+[END]
 
+# ==================================================
+# 4. CONDITIONAL ASSET INCLUSION
+# ==================================================
+# Conditionally include AI-Gelb chatbot assets based on configuration constants
+
+# --------------------------------------------------
+# Chatbot CSS Inclusion
+# --------------------------------------------------
+# Include chatbot CSS if enabled in constants
+
+[{$plugin.tx_aigelb.includeCSS} == 1]
+    page.includeCSS {
+        aigelb_chatbot = {$plugin.tx_aigelb.cssFile}
+        aigelb_chatbot {
+            media = all
+            forceOnTop = 0
+            title = AI-Gelb Chatbot Styles
+        }
+    }
+[END]
+
+# --------------------------------------------------
+# Chatbot JavaScript Inclusion
+# --------------------------------------------------
+# Include chatbot JavaScript if enabled in constants
+
+[{$plugin.tx_aigelb.includeJS} == 1]
+    page.includeJSFooter {
+        aigelb_chatbot = {$plugin.tx_aigelb.jsFile}
+        aigelb_chatbot {
+            forceOnTop = 0
+            title = AI-Gelb Chatbot Scripts
+        }
+    }
 [END]
