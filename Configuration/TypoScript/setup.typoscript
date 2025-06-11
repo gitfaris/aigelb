@@ -145,11 +145,6 @@ lib.tx_aigelb.contentElementRendering {
 
         includeCSS {
             template = {$plugin.tx_aigelb.settings.includeTemplateCSS}
-            template {
-                media = all
-                forceOnTop = 0
-                title = AI-Gelb Template Styles
-            }
         }
 
         # --------------------------------------------------
@@ -159,10 +154,6 @@ lib.tx_aigelb.contentElementRendering {
 
         includeJSFooter {
             template = {$plugin.tx_aigelb.settings.includeTemplateJS}
-            template {
-                forceOnTop = 0
-                title = AI-Gelb Template Scripts
-            }
         }
     }
 
@@ -181,11 +172,6 @@ lib.tx_aigelb.contentElementRendering {
 [{$plugin.tx_aigelb.includeCSS} == 1]
     page.includeCSS {
         aigelb_chatbot = {$plugin.tx_aigelb.cssFile}
-        aigelb_chatbot {
-            media = all
-            forceOnTop = 0
-            title = AI-Gelb Chatbot Styles
-        }
     }
 [END]
 
@@ -197,10 +183,6 @@ lib.tx_aigelb.contentElementRendering {
 [{$plugin.tx_aigelb.includeJS} == 1]
     page.includeJSFooter {
         aigelb_chatbot = {$plugin.tx_aigelb.jsFile}
-        aigelb_chatbot {
-            forceOnTop = 0
-            title = AI-Gelb Chatbot Scripts
-        }
     }
 [END]
 
